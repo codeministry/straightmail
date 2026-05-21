@@ -6,9 +6,7 @@ import java.nio.charset.StandardCharsets;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.support.ResourceBundleMessageSource;
@@ -19,8 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SpringBootApplication(exclude = {
-    MongoAutoConfiguration.class,
-    MongoDataAutoConfiguration.class,
     DataSourceAutoConfiguration.class
 })
 public class StraightmailApplication {

@@ -25,8 +25,8 @@ public class StraightmailApplicationTests extends AbstractTest {
         testMap.put("test", JsonNodeFactory.instance.numberNode(200.8));
 
         EmailTemplateFileRequestDTO emailInlineTemplateRequestDTO = EmailTemplateFileRequestDTO.builder()
-            .recipients(List.of("test@encircle360.com"))
-            .sender("test@encircle360.com")
+            .recipients(List.of("user@example.com"))
+            .sender("user@example.com")
             .model(testMap)
             .emailTemplateId("test")
             .build();
@@ -58,8 +58,8 @@ public class StraightmailApplicationTests extends AbstractTest {
         testMap.put("object", nodeFactory.pojoNode(testPojo));
 
         EmailTemplateFileRequestDTO emailTemplateFileRequestDTO = EmailTemplateFileRequestDTO.builder()
-            .recipients(List.of("test@encircle360.com"))
-            .sender("test@encircle360.com")
+            .recipients(List.of("user@example.com"))
+            .sender("user@example.com")
             .model(testMap)
             .emailTemplateId("test_json_node")
             .locale("de")
@@ -77,8 +77,8 @@ public class StraightmailApplicationTests extends AbstractTest {
         testMap.put("test", JsonNodeFactory.instance.numberNode(200.8));
 
         EmailInlineTemplateRequestDTO emailInlineTemplateRequestDTO = EmailInlineTemplateRequestDTO.builder()
-            .recipients(List.of("test@encircle360.com"))
-            .sender("test@encircle360.com")
+            .recipients(List.of("user@example.com"))
+            .sender("user@example.com")
             .subject("test mail")
             .model(testMap)
             .emailTemplate("${test!\"\"}")
@@ -93,8 +93,8 @@ public class StraightmailApplicationTests extends AbstractTest {
         HashMap<String, JsonNode> testMap = new HashMap<>();
         testMap.put("test", JsonNodeFactory.instance.numberNode(200.8));
         EmailInlineTemplateRequestDTO emailInlineTemplateRequestDTO = EmailInlineTemplateRequestDTO.builder()
-            .recipients(List.of("test@encircle360.com"))
-            .sender("tes1 t@encircle360.com")
+            .recipients(List.of("user@example.com"))
+            .sender("invalid sender@example.com")
             .subject("test mail")
             .model(testMap)
             .emailTemplate("${test!\"\"}")
@@ -104,8 +104,8 @@ public class StraightmailApplicationTests extends AbstractTest {
         post("/email/inline", emailInlineTemplateRequestDTO, status().is4xxClientError());
 
         emailInlineTemplateRequestDTO = EmailInlineTemplateRequestDTO.builder()
-            .recipients(List.of("tes t@encircle360.com"))
-            .sender("tes1t@encircle360.com")
+            .recipients(List.of("invalid address@example.com"))
+            .sender("sender@example.com")
             .subject("test mail")
             .model(testMap)
             .emailTemplate("${test!\"\"}")
@@ -114,9 +114,9 @@ public class StraightmailApplicationTests extends AbstractTest {
         post("/email/inline", emailInlineTemplateRequestDTO, status().is4xxClientError());
 
         emailInlineTemplateRequestDTO = EmailInlineTemplateRequestDTO.builder()
-            .recipients(List.of("tes t@encircle360.com"))
-            .cc(List.of("tes t@encircle360.com"))
-            .sender("tes1t@encircle360.com")
+            .recipients(List.of("invalid address@example.com"))
+            .cc(List.of("invalid address@example.com"))
+            .sender("sender@example.com")
             .subject("test mail")
             .model(testMap)
             .emailTemplate("${test!\"\"}")
@@ -127,9 +127,9 @@ public class StraightmailApplicationTests extends AbstractTest {
 
         emailInlineTemplateRequestDTO =
             EmailInlineTemplateRequestDTO.builder()
-                .recipients(List.of("tes t@encircle360.com"))
-                .bcc(List.of("tes t@encircle360.com"))
-                .sender("tes1t@encircle360.com")
+                .recipients(List.of("invalid address@example.com"))
+                .bcc(List.of("invalid address@example.com"))
+                .sender("sender@example.com")
                 .subject("test mail")
                 .model(testMap)
                 .emailTemplate("${test!\"\"}")
@@ -151,10 +151,10 @@ public class StraightmailApplicationTests extends AbstractTest {
         post("/email/inline", emailInlineTemplateRequestDTO, status().is4xxClientError());
 
         emailInlineTemplateRequestDTO = EmailInlineTemplateRequestDTO.builder()
-            .recipients(List.of("test@encircle360.com"))
+            .recipients(List.of("user@example.com"))
             .cc(List.of("test@encircle360.berlin"))
             .bcc(List.of("test@encircle360.cloud"))
-            .sender("tes1t@encircle360.com")
+            .sender("sender@example.com")
             .subject("test mail")
             .model(testMap)
             .emailTemplate("${test!\"\"}")

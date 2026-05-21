@@ -3,9 +3,9 @@ package com.encircle360.oss.straightmail.dto.email;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 import com.encircle360.oss.straightmail.config.EmailRegex;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -39,8 +39,13 @@ public abstract class EmailRequestDTO {
 
     @NotBlank
     @Pattern(regexp = EmailRegex.value)
-    @Schema(description = "Sender of the email", example = "sender@encircle360.com")
+    @Schema(description = "Sender email address of the email", example = "sender@example.com")
     private String sender;
+
+    @Schema(description = "Optional display name of the sender. When set, the From header is "
+            + "rendered as 'Display Name <sender@example.com>'.",
+            example = "Straightmail")
+    private String senderName;
 
     @Schema(description = "Contains contents for template, map key will be available in template")
     private HashMap<String, JsonNode> model;
