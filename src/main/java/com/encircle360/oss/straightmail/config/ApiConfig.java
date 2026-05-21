@@ -4,20 +4,16 @@ import org.springframework.context.annotation.Configuration;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
-import io.swagger.v3.oas.annotations.servers.Server;
 
+// Swagger UI uses the current request host as the server URL, so straightmail
+// can be reached through reverse proxies, port forwarding or tunnels without
+// a hard-coded base URL.
 @OpenAPIDefinition(
     info = @Info(
         title = "Straightmail",
-        version = "0.0.2",
+        version = "0.4.0",
         description = ""
-    ),
-    servers = {
-        @Server(
-            url = "http://localhost:50003",
-            description = ""
-        )
-    }
+    )
 )
 @Configuration
 public class ApiConfig {

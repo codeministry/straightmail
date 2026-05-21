@@ -10,14 +10,14 @@ import freemarker.template.TemplateException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
-import org.jsoup.safety.Whitelist;
+import org.jsoup.safety.Safelist;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import javax.mail.internet.MimeMessage;
-import javax.mail.util.ByteArrayDataSource;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.util.ByteArrayDataSource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -121,7 +121,7 @@ public class EmailService {
         }
 
         // remove all HTML from subject
-        subject = Jsoup.clean(subject, Whitelist.none());
+        subject = Jsoup.clean(subject, Safelist.none());
 
         if (emailRequest.getSender() == null) {
             emailRequest.setSender(DEFAULT_SENDER);
@@ -135,12 +135,17 @@ public class EmailService {
             // set plain text result by removing all html tags and convert br to \n
             if (plainText == null) {
                 plainText = Jsoup.clean(htmlBody,
-                        Whitelist.none().addTags("br", "a").addAttributes("a", "href"));
+                        Safelist.none().addTags("br", "a").addAttributes("a", "href"));
                 plainText = plainText.replaceAll("(<br>|<br/>|<br\\s+/>)", "\n");
                 plainText = HtmlUtil.replaceHtmlLinkToPlainText(plainText);
             }
 
-            helper.setFrom(emailRequest.getSender());
+            String senderName = emailRequest.getSenderName();
+            if (senderName != null && !senderName.isBlank()) {
+                helper.setFrom(emailRequest.getSender(), senderName);
+            } else {
+                helper.setFrom(emailRequest.getSender());
+            }
             helper.setSubject(subject);
 
             if (emailRequest.getRecipients() != null && !emailRequest.getRecipients().isEmpty()) {

@@ -1,22 +1,19 @@
 spring:
-  data:
-    mongodb:
-      database: test
-      uri: mongodb://localhost:27017/test
   mail:
     default-encoding: UTF-8
-    host: ${SMTP_HOST:localhost}
-    username: ${SMTP_USER:""}
-    password: ${SMTP_PASSWORD:""}
-    port: ${SMTP_PORT:1025}
-    default-sender: ${DEFAULT_SENDER:test@encircle360.com}
-    default-template: ${DEFAULT_TEMPLATE:default}
+    host: localhost
+    username: ""
+    password: ""
+    # GreenMail's default SMTP test port
+    port: 3025
+    default-sender: user@example.com
+    default-template: default
     properties:
       mail:
         smtp:
-          auth: true
+          auth: false
           starttls:
-            enable: ${SMTP_ENABLE_TLS:true}
+            enable: false
     protocol: smtp
     test-connection: false
 server:

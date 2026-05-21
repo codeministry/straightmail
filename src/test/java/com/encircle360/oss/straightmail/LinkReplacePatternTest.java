@@ -10,7 +10,7 @@ public class LinkReplacePatternTest {
     @Test
     public void testPattern() {
         String testText = "<a target=\"_blank\" href=\"lalala.html\">asdf</a> Test text <a href=\"https://www.google.com\">test google link</a> asdasd ";
-        String expectation = "asdf(lalala.html) Test text test google link(https://www.google.com) asdasd ";
+        String expectation = "asdf ( lalala.html ) Test text test google link ( https://www.google.com ) asdasd ";
 
         Assertions.assertEquals(expectation, HtmlUtil.replaceHtmlLinkToPlainText(testText));
     }

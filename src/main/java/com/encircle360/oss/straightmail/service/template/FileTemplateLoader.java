@@ -1,17 +1,15 @@
 package com.encircle360.oss.straightmail.service.template;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import com.encircle360.oss.straightmail.config.MongoDbConfig;
 import com.encircle360.oss.straightmail.model.Template;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,7 +17,6 @@ import java.nio.file.Path;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Profile("!" + MongoDbConfig.PROFILE)
 public class FileTemplateLoader extends AbstractTemplateLoader {
 
     @Override

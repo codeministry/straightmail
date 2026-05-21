@@ -2,7 +2,7 @@ package com.encircle360.oss.straightmail.controller;
 
 import java.io.IOException;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

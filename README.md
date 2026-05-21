@@ -1,133 +1,169 @@
-[![pipeline status](https://gitlab.com/encircle360-oss/straightmail/straightmail/badges/master/pipeline.svg)](https://gitlab.com/encircle360-oss/straightmail/straightmail/commits/master)
+# straightmail
 
-## straightmail - mail sending APIs with template and i18n support
+[![CI](https://github.com/encircle360-oss/straightmail/actions/workflows/ci.yml/badge.svg)](https://github.com/encircle360-oss/straightmail/actions/workflows/ci.yml)
+[![Release](https://github.com/encircle360-oss/straightmail/actions/workflows/release.yml/badge.svg)](https://github.com/encircle360-oss/straightmail/actions/workflows/release.yml)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Container](https://img.shields.io/badge/ghcr.io-encircle360--oss%2Fstraightmail-blue?logo=docker)](https://github.com/encircle360-oss/straightmail/pkgs/container/straightmail)
+[![Matrix](https://img.shields.io/badge/Matrix-Join%20Chat-0dbd8b?logo=matrix&logoColor=white)](https://matrix.to/#/#oss:encircle360.com)
 
-### Getting started
-To run an instance with default templates and language just run:
-```
+A small Spring Boot service that exposes a REST API for sending emails. Templates are rendered with [Freemarker](https://freemarker.apache.org/) and translated with standard `messages.properties` bundles, so subjects, HTML bodies and plain-text fallbacks all flow through the same locale-aware pipeline.
+
+Maintained and sponsored by [encircle360 GmbH](https://encircle360.com) together with the open source community, partners and friends.
+
+> **Project moved to GitHub.** The legacy GitLab repository at `gitlab.com/encircle360-oss/straightmail/straightmail` is archived and no longer receives updates. Container images are now published to GitHub Container Registry at `ghcr.io/encircle360-oss/straightmail`.
+
+## Getting started
+
+Pull and run the prebuilt image:
+
+```bash
 docker run -p 50003:50003 -p 50004:50004 \
-    --env SMTP_PASSWORD=bar \
     --env SMTP_HOST=host.docker.internal \
     --env SMTP_USER=foo \
+    --env SMTP_PASSWORD=bar \
     --env SMTP_PORT=1025 \
-    --env DEFAULT_SENDER=test@encircle360.com \
+    --env DEFAULT_SENDER=noreply@example.com \
     --env SMTP_ENABLE_TLS=true \
     --env SMTP_ENABLE_SSL=false \
     --env SPRING_PROFILES_ACTIVE=development \
-    registry.gitlab.com/encircle360-oss/straightmail/straightmail:latest
-```
-Variables should be set to your correct SMTP credentials and host. `DEFAULT_SENDER` should be set to your default email address, if no email is set in payload this one will be used.
-
-If you want to use SSL set `SMTP_ENABLE_SSL` to `true` an `SMTP_ENABLE_TLS` to `false`. Same for TLS but in other direction
-
-Now you can start using Straightmail for sending your email via simple rest calls.
-
-Open `http://localhost:50003/swagger-ui/index.html?url=/v3/api-docs#/` in your browser to visit the swagger and openAPI documentation which shows the available REST endpoints you can use to send emails.
-
-Note that you should start straightmail in `production` profile if you're in a production environment otherwise the swagger-ui will be be available and open to the world.
-To do this just switch the docker env variable to `--env SPRING_PROFILES_ACTIVE=production`.
-
-You should also note that this service is ment to be an internal service and shouldn't be exposed to the outside world since it has no security in it's APIs.
-
-### Example REST call to send an email
-Let's send an email using our straightmail instance with template as files in our templates file directory. 
-Your template should be saved in two files, one for the subject and one for
-the body of an email. Template id is the name of the template file without ending, the subject template always 
-called templateId_subject.ftl (**important:** all HTML tags will be removed from subject while parsing).
-
-You can also add templateId_plain.ftl for plaintext usage of the template, please avoid to use HTML in this template. 
-```
-curl -d '{   "recipients": ["test@encircle360.com"],   "cc": null,   "bcc": null,   "attachments": null,   "sender": "test@encircle360.com",   "model": {     "test": 200.8,     "text": "test text"   },   "locale": "de",   "subject": "test mail: ${text}",   "emailTemplateId": "default" }'  -H "Content-Type: application/json" -X POST http://localhost:50003/
+    ghcr.io/encircle360-oss/straightmail:latest
 ```
 
-Let's send an email using our straightmail instance with a template submitted inline.
-```
-curl -d '{   "recipients": ["test@localhost"],   "cc": null,   "bcc": null,   "attachments": null,   "sender": "test@localhost",   "model": {     "test": 200.8,     "text": "test text"   },   "locale": "de",   "subject": "test mail: ${text}",   "emailTemplate": "${test!\"\"}" }' -H "Content-Type: application/json" -X POST http://localhost:50003/inline
-```
+`DEFAULT_SENDER` is used when a request does not specify a `sender`. For SSL use `SMTP_ENABLE_SSL=true` and `SMTP_ENABLE_TLS=false`; for STARTTLS keep the inverse.
 
-### Attachments
-Attachments can be provided as array of attachment objects. The content of the files should be a base64 encoded utf 8 string. for example:
+Open `http://localhost:50003/swagger-ui/index.html` to explore the REST API. Switch the active profile to `production` for production deployments — Swagger UI is otherwise reachable.
 
-```
-{..., "attachments": [{"filename":"picture.jpg", "mimeType": "image/jpg", "content":"IG51bGw="}]}
-```
+This service is intended to run inside an internal network and should not be exposed to the public internet. There is no built-in authentication on its API.
 
-### Customization
-If you want to bring your own templates and language files just use the straightmail base image and create your own straightmail image on top of that.
-We suggest to use your own Dockerfile for that. You could for example put this one with your templates and language files into a git repository to have everything versioned.
+## Sending an email with a file-based template
 
-#### Models in your template
+Templates live in `/resources/templates/` and consist of two or three files per template id:
 
-You can use objects, lists and primitive types in your template (provided in model field). Numbers (doubles, integers and co.) will be mapped correctly into the template.  
+- `<templateId>_subject.ftl` — the subject line (HTML is stripped)
+- `<templateId>.ftl` — the HTML body
+- `<templateId>_plain.ftl` — optional plain-text body
 
-### i18n
-
-As you can see in Dockerfile we provide i18n functionality. You can also provide customized subject, just use freemarker template language in template_subject.ftl files 
-
-In template files you can use:
-```<@spring.message "message.key"/>``` to load messages from properties files. In the next section example Dockerfile, more information about templates and messages will be provided. 
-
-### MongoDB Support (optional)
-
-MongoDb support can be enabled by spring profile and will give the ability of saving templates to database with a simple restFul controller. If you want to enable mongoDb support you can use ```mongo``` profile. Example docker run command
-
-```
-docker run -p 50003:50003 -p 50004:50004 \
-    --env SMTP_PASSWORD=bar \
-    --env SMTP_HOST=host.docker.internal \
-    --env SMTP_USER=foo \
-    --env SMTP_PORT=1025 \
-    --env DEFAULT_SENDER=test@encircle360.com \
-    --env SMTP_ENABLE_TLS=true \
-    --env SMTP_ENABLE_SSL=false \
-    --env SPRING_PROFILES_ACTIVE=mongo \
-    --env MONGO_URI=mongodb://localhost:27017/test \
-    --env MONGO_DATABASE=straigthmail \
-    registry.gitlab.com/encircle360-oss/straightmail/straightmail:latest
+```bash
+curl -X POST http://localhost:50003/ \
+  -H "Content-Type: application/json" \
+  -d '{
+        "recipients": ["user@example.com"],
+        "sender": "noreply@example.com",
+        "senderName": "Straightmail",
+        "model": { "name": "World" },
+        "locale": "de",
+        "emailTemplateId": "default"
+      }'
 ```
 
-If you want to use authentication for mongodb use the following env variables 
+## Sending an email with an inline template
 
-```
-SPRING_DATA_MONGODB_USERNAME
-SPRING_DATA_MONGODB_PASSWORD
-SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE
-```
-
-You will see all template operations in swagger ui:
-`http://localhost:50003/swagger-ui/index.html?url=/v3/api-docs#/`
-
-
-### Example Dockerfile
-
-Since straightmail will lookup for templates in `/resources/templates/` and i18n files in `/resources/i18n/` you can use the following Dockerfile as example to create your own docker image with your own templates and i18n.
-You can find examples how [templates](src/main/resources/templates) or [i18n files](src/main/resources/i18n) look like [here](src/main/resources).
-```
-FROM registry.gitlab.com/encircle360-oss/straightmail/straightmail:latest
-ADD templates /resources/templates # add your template directory containing *.ftl templates here
-ADD i18n /resources/i18n # add your i18n directory containing messages.properties files here
+```bash
+curl -X POST http://localhost:50003/inline \
+  -H "Content-Type: application/json" \
+  -d '{
+        "recipients": ["user@example.com"],
+        "sender": "noreply@example.com",
+        "subject": "Hello ${name}",
+        "emailTemplate": "<p>Hello <b>${name}</b></p>",
+        "model": { "name": "World" },
+        "locale": "de"
+      }'
 ```
 
-If you're done with this you can build your own image using docker-cli `docker build .` or let your build pipeline do that.
-E.g. we suggest to use gitlab-ci to always have your own customized straightmail docker image.
+## Sender display name
 
-After you've build your own docker image with your own templates you can use the REST api to send emails.
-The `emailTemplateId` field corresponds to the template filename. If you've added a template called `emailConfirmation.ftl` you have to use 
-`"emailConfirmation"`
-within your API request payload.
+The optional `senderName` field controls the `From` header. When set, the header renders as `Display Name <noreply@example.com>` instead of the bare address.
 
-### Service Health
+## Attachments
 
-If you started with port exposing to localhost you can fetch `http://localhost:50004/actuator/health` to get health status of the service itself 
+Pass attachments as an array of objects. The `content` field is a base64-encoded byte string.
 
-### Good to know 
-Straightmail internally uses the [freemarker](https://freemarker.apache.org/) template engine which has the advantages that it's easy to copy and paste email html templates.
-This is really useful if you for example use email templates bought on themeforest. Since these templates can get updates you don't have to check each html dom element while importing a template update.
-Mostly you only have to focus on your content model variables and you're able to just copy the html from the update. 
+```json
+{
+  "attachments": [
+    { "filename": "picture.jpg", "mimeType": "image/jpeg", "content": "IG51bGw=" }
+  ]
+}
+```
 
-Templates will be used for body and subject, too. So you can use i18n features also in your subject. 
+## Customising templates and translations
 
-So you have the [full feature support](https://freemarker.apache.org/docs/ref.html) of freemarker in your templates and also activated i18n support so that you can also put your resource bundles with messages.properties into your image and switch the locale for each email you're sending.
+Build a thin image on top of the upstream one:
 
-This is open source software by [encircle360](https://encircle360.com).
-Use on your own risk and for personal use. If you need support or consultancy just contact us.
+```Dockerfile
+FROM ghcr.io/encircle360-oss/straightmail:latest
+ADD templates /resources/templates
+ADD i18n /resources/i18n
+```
+
+See [src/main/resources/templates](src/main/resources/templates) and [src/main/resources/i18n](src/main/resources/i18n) for the expected file layout. The `emailTemplateId` in API requests maps to the template filename without extension (e.g. `emailConfirmation.ftl` → `"emailConfirmation"`).
+
+## Service health
+
+If the management port is mapped to your host, `http://localhost:50004/actuator/health` returns the liveness/readiness state.
+
+## Building from source
+
+```bash
+./gradlew bootJar
+```
+
+Requires JDK 21 or newer. Skip tests with `-x test`.
+
+## Contributing & community
+
+We welcome contributors! Whether you want to:
+
+- **Submit pull requests** for bug fixes, features or documentation improvements
+- **Help with testing** and quality assurance
+- **Improve documentation** and examples
+- **Report bugs** or suggest new features
+- **Become a maintainer** for the project
+
+Every contribution is valuable. You don't need to be an expert — we're happy to help you get started.
+
+### How to contribute
+
+1. **Fork the repository** and create a feature branch
+2. **Make your changes** (code, docs, tests)
+3. **Test your changes** locally with `./gradlew build`
+4. **Submit a Pull Request** with a clear description
+5. **Engage in the review** — we'll work with you to get the change merged
+
+### Becoming a maintainer
+
+Interested in co-maintaining this project? Show your interest by contributing pull requests and helping in issues, then start a discussion in [GitHub Discussions](https://github.com/encircle360-oss/straightmail/discussions) so we can talk about it.
+
+## Support & community
+
+- **Matrix chat**: join [#oss:encircle360.com](https://matrix.to/#/#oss:encircle360.com) to talk to maintainers and other users
+- **Bug reports & feature requests**: open a [GitHub Issue](https://github.com/encircle360-oss/straightmail/issues)
+- **General questions and ideas**: start a [GitHub Discussion](https://github.com/encircle360-oss/straightmail/discussions)
+
+For professional support, consulting or custom development, reach out via our website at [encircle360.com](https://encircle360.com).
+
+## Disclaimer
+
+This software is provided "AS IS" without warranty of any kind, either express or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, or non-infringement.
+
+While we aim to keep the project healthy and well-tested, you acknowledge that:
+
+- You use straightmail at your own risk.
+- We recommend thorough testing in non-production environments before relying on it in production.
+- The project may contain bugs or security issues. There is no built-in API authentication; do not expose it to the public internet.
+- We are not liable for damages or losses resulting from its use.
+
+For deployments that require guaranteed support or SLAs, please contact us via [encircle360.com](https://encircle360.com).
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE).
+
+## Maintainers
+
+This project is maintained and sponsored by **[encircle360 GmbH](https://encircle360.com)**, providing enterprise-grade Kubernetes and cloud-native solutions.
+
+## Credits
+
+Thanks to all contributors, partners and the wider open source community for making this project possible.
