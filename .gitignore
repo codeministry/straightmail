@@ -39,6 +39,7 @@ frontend/test-results/
 .DS_Store
 *.hprof
 .claude
+Plans
 /tmp
 
 # Docker local data

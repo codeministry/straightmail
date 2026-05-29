@@ -17,6 +17,6 @@ RUN chown -R straightmail:straightmail /app
 
 USER straightmail
 
-EXPOSE 8080
+EXPOSE 50003 50004
 
 ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
