@@ -1,0 +1,21 @@
+<label class="form-label">
+  @if (icon()) {
+    <i [class]="icon()" style="margin-right: 6px;"></i>
+  }
+  {{ label() | translate }}
+  @if (required()) {
+    <span class="text-danger">*</span>
+  }
+</label>
+<input
+  #cd="appControlDirty"
+  (ngModelChange)="onChange($event, cd)"
+  [appControlDirty]="control()"
+  [disabled]="disabled()"
+  [class.is-invalid]="control()?.invalid && control()?.touched"
+  [ngModel]="value()"
+  [placeholder]="placeholder() | translate"
+  [type]="type()"
+  class="form-control"
+/>
+<app-form-error [control]="control()"/>
