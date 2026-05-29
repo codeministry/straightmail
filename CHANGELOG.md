@@ -7,7 +7,7 @@ For component-specific changes see [`backend/CHANGELOG.md`](backend/CHANGELOG.md
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [0.5.0] - 2026-04-08
+## [0.5.0] - 2026-05-29
 
 For component-specific changes see [`backend/CHANGELOG.md`](backend/CHANGELOG.md) and [`frontend/CHANGELOG.md`](frontend/CHANGELOG.md).
 
@@ -27,6 +27,32 @@ For component-specific changes see [`backend/CHANGELOG.md`](backend/CHANGELOG.md
 - Added `if: github.ref == 'refs/heads/main'` guard to `backend.yml` docker job (was pushing on PRs)
 - SQLite replaces PostgreSQL as default database backend (Liquibase migrations updated)
 - Keycloak hostname handling refactored; JWK/issuer URLs split for OIDC setups
+
+## [0.4.0] - 2026-05-21
+
+Security release. For component-specific changes see [`backend/CHANGELOG.md`](backend/CHANGELOG.md).
+
+### Security
+
+- Upgraded off end-of-life Spring Boot 2.5.6 → 3.5.14 (Java 17 → 21, Temurin)
+- Patched known-vulnerable dependencies: jsoup 1.18.3 (`Whitelist` → `Safelist`), springdoc-openapi 2.8.17, MapStruct 1.6.3, Lombok 1.18.46
+- Supply-chain hardening: published images ship an SBOM and build provenance attestation
+- Swagger no longer exposes a hardcoded server URL; the OpenAPI host follows the request host (#2)
+
+### Added
+
+- `EmailRequest.senderName` for `Display Name <addr@example.com>` From headers (#1)
+- GitHub Actions CI replacing GitLab CI: build/test on PR + `master`, multi-arch (amd64/arm64) images to `ghcr.io`
+
+### Changed
+
+- Migrated `javax.*` → `jakarta.*`; added `lombok-mapstruct-binding`; Gradle wrapper → 8.10.2
+- Switched tests from embedded MongoDB to GreenMail; Dockerfile base → `eclipse-temurin:21-jre`
+- Rewrote README (badges, migration banner, contributing/support, disclaimer, Apache-2.0)
+
+### Removed
+
+- MongoDB integration — file-based templates only
 
 ## [0.2.0] - 2026-03-16
 

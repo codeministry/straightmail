@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="straightmail API" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <option name="ACTIVE_PROFILES" value="database" />
-    <module name="straightmail.main" />
+    <module name="com.encircle360.oss.straightmail.straightmail.main" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="com.encircle360.oss.straightmail.StraightmailApplication" />
     <extension name="coverage">
       <pattern>

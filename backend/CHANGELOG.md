@@ -5,7 +5,7 @@ All notable changes to the straightmail backend will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [0.5.0] - 2026-04-08
+## [0.5.0] - 2026-05-29
 
 ### Added
 
@@ -40,6 +40,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - `auth.enabled` boolean property (superseded by `auth.mode`)
 - Helm chart templates and related CI workflows
+
+## [0.4.0] - 2026-05-21
+
+Security release: moves the application off end-of-life Spring Boot 2.5.6 and patches
+known-vulnerable dependencies, and hardens the build/release supply chain.
+
+### Security
+
+- Upgraded off end-of-life Spring Boot 2.5.6 → 3.5.14 (Java 17 → 21, Temurin) to pick up security patches
+- Patched dependencies with known vulnerabilities: jsoup → 1.18.3 (`Whitelist` → `Safelist`), springdoc-openapi → 2.8.17, MapStruct → 1.6.3, Lombok → 1.18.46
+- Supply-chain hardening: published images now ship an SBOM and build provenance attestation
+- Dropped the hardcoded Swagger server URL so the OpenAPI host follows the request host (#2)
+
+### Added
+
+- `EmailRequest.senderName` so the `From` header renders as `Display Name <addr@example.com>` (#1)
+- GitHub Actions CI: build/test on PR + `master`, multi-arch (amd64/arm64) image published to `ghcr.io`
+
+### Changed
+
+- Migrated `javax.*` → `jakarta.*` (servlet, mail, validation)
+- Added `lombok-mapstruct-binding` for builder/setter interop with the upgraded MapStruct/Lombok
+- Gradle wrapper → 8.10.2
+- Switched tests from embedded MongoDB to GreenMail (embedded SMTP)
+- Updated Dockerfile base image to `eclipse-temurin:21-jre`
+- Rewrote README with badges, migration banner, contributing & support sections, disclaimer, and Apache-2.0 reference
+
+### Removed
+
+- MongoDB integration (template CRUD, repository, `MongoDbTemplateLoader`, `mongo` profile) — file-based templates only
 
 ## [0.2.0] - 2026-03-16
 
