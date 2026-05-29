@@ -1,0 +1,154 @@
+# =============================================================================
+# Mode: OIDC Auth + PostgreSQL + Database Templates + Keycloak
+# =============================================================================
+# Auth:      OIDC/JWT (Bearer token — Keycloak)
+# Tenant:    resolved from JWT claim 'tenant_ids' (multivalued)
+# Templates: stored in PostgreSQL DB (full CRUD via UI/API)
+# Database:  PostgreSQL 16 (multi-replica ready, HikariCP pool)
+# Services:  backend + mailpit + keycloak + postgres (frontend served by backend on :50003)
+#
+# Start:  docker compose -f compose/oidc-postgres.yml up
+# UI:     http://localhost:50003  →  login: admin / admin
+# API:    http://localhost:50003/api  (Bearer token required)
+# Keycloak admin: http://localhost:8090  →  admin / admin
+# Mails:  http://localhost:8025 (Mailpit web UI)
+# DB:     localhost:5432  db=straightmail  user=straightmail  pw=straightmail
+#
+# OIDC hostname strategy: see oidc-sqlite.yml for explanation.
+# =============================================================================
+
+services:
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: straightmail-oidc-pg-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    healthcheck:
+      test: [ "CMD", "curl", "-sf", "http://localhost:8025/api/v1/info" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - straightmail
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: straightmail-oidc-pg-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: straightmail
+      POSTGRES_USER: straightmail
+      POSTGRES_PASSWORD: straightmail
+    volumes:
+      - straightmail-oidc-pg-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "straightmail", "-d", "straightmail" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - straightmail
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5.6
+    container_name: straightmail-oidc-pg-keycloak
+    entrypoint: [ "/bin/bash", "-c" ]
+    command:
+      - |
+        /opt/keycloak/bin/kc.sh start-dev --import-realm &
+        KC_PID=$$!
+        trap "kill $$KC_PID" SIGTERM SIGINT
+        until /opt/keycloak/bin/kcadm.sh config credentials \
+          --server http://localhost:8080 --realm master \
+          --user "$$KC_BOOTSTRAP_ADMIN_USERNAME" --password "$$KC_BOOTSTRAP_ADMIN_PASSWORD" \
+          > /dev/null 2>&1; do sleep 5; done
+        /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=none
+        wait $$KC_PID
+    restart: unless-stopped
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: "http://localhost:8090"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    ports:
+      - "8090:8080"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -sf http://localhost:8080/health/ready || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - straightmail
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: straightmail-oidc-pg-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: database
+      AUTH_MODE: oidc
+      OIDC_ISSUER_URI: "http://localhost:8090/realms/straightmail"
+      OIDC_JWK_URI: "http://keycloak:8080/realms/straightmail/protocol/openid-connect/certs"
+      JWT_TENANT_IDS_CLAIM: "tenant_ids"
+      # Stable dev encryption key — change for any non-local environment
+      ENCRYPTION_KEY: "CHANGE_ME_GENERATE_RANDOM_KEY"
+      # PostgreSQL connection
+      DB_URL: "jdbc:postgresql://postgres:5432/straightmail"
+      DB_DRIVER: "org.postgresql.Driver"
+      DB_DIALECT: "org.hibernate.dialect.PostgreSQLDialect"
+      DB_USERNAME: straightmail
+      DB_PASSWORD: straightmail
+      DB_POOL_SIZE: "5"
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      DEFAULT_SENDER: "test@straightmail.local"
+      CORS_ALLOWED_ORIGINS: "http://localhost:4200"
+      # -----------------------------------------------------------------------
+      # Tenant configuration (TenantReconciliationService — runs at startup)
+      # -----------------------------------------------------------------------
+      TENANTS_CONFIG_0_ID: "acme-1"
+      TENANTS_CONFIG_0_DISPLAY_NAME: "Acme 1"
+      TENANTS_CONFIG_0_SMTP_HOST: "mailpit"
+      TENANTS_CONFIG_0_SMTP_PORT: "1025"
+      TENANTS_CONFIG_0_SMTP_SENDER: "acme-1@straightmail.local"
+      TENANTS_CONFIG_1_ID: "acme-2"
+      TENANTS_CONFIG_1_DISPLAY_NAME: "Acme 2"
+      TENANTS_CONFIG_1_SMTP_HOST: "mailpit"
+      TENANTS_CONFIG_1_SMTP_PORT: "1025"
+      TENANTS_CONFIG_1_SMTP_SENDER: "acme-2@straightmail.local"
+      # -----------------------------------------------------------------------
+      # Template sources
+      # -----------------------------------------------------------------------
+      TEMPLATE_FILE_ENABLED: "true"
+      TEMPLATE_GIT_SYNC_ENABLED: "true"
+    volumes:
+      - ./data/sqlite:/data
+      - ./data/files:/resources/templates
+    ports:
+      - "50003:50003"
+      - "50004:50004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    networks:
+      - straightmail
+
+networks:
+  straightmail:
+    driver: bridge
+
+volumes:
+  straightmail-oidc-pg-data:

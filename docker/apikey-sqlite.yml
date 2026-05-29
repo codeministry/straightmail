@@ -1,0 +1,91 @@
+# =============================================================================
+# Mode: API-Key Auth + SQLite + Database Templates
+# =============================================================================
+# Auth:      API-Key  (X-API-KEY header)
+# Tenant:    X-Tenant-ID header (resolved against DB)
+# Templates: stored in SQLite DB (full CRUD via UI/API)
+# Database:  SQLite (WAL mode, persisted in named volume)
+# Services:  backend + mailpit (frontend served by backend on :50003)
+#
+# Start:  docker compose -f compose/apikey-sqlite.yml up
+# API:    http://localhost:50003/api
+#         Headers: X-API-KEY: dev-api-key  +  X-Tenant-ID: acme-1
+# UI:     http://localhost:50003
+# Mails:  http://localhost:8025 (Mailpit web UI)
+#
+# Tenants are reconciled from TENANTS_CONFIG_* on every backend start.
+# To add tenants, duplicate the TENANTS_CONFIG_0_* block with index 1, 2, …
+# =============================================================================
+
+services:
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: straightmail-apikey-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    healthcheck:
+      test: [ "CMD", "curl", "-sf", "http://localhost:8025/api/v1/info" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - straightmail
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: straightmail-apikey-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: database
+      AUTH_MODE: api-key
+      API_KEY: "dev-api-key-change-me"
+      # Stable dev encryption key — change for any non-local environment
+      ENCRYPTION_KEY: "CHANGE_ME_GENERATE_RANDOM_KEY"
+      DB_URL: "jdbc:sqlite:/data/straightmail.db?journal_mode=WAL"
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      DEFAULT_SENDER: "test@straightmail.local"
+      CORS_ALLOWED_ORIGINS: "http://localhost:4200"
+      # -----------------------------------------------------------------------
+      # Tenant configuration (TenantReconciliationService — runs at startup)
+      # Tenants listed here are created/updated in the DB automatically.
+      # Tenants NOT listed here are deleted from the DB.
+      # -----------------------------------------------------------------------
+      TENANTS_CONFIG_0_ID: "acme-1"
+      TENANTS_CONFIG_0_DISPLAY_NAME: "Acme 1"
+      TENANTS_CONFIG_0_SMTP_HOST: "mailpit"
+      TENANTS_CONFIG_0_SMTP_PORT: "1025"
+      TENANTS_CONFIG_0_SMTP_SENDER: "acme-1@straightmail.local"
+      TENANTS_CONFIG_1_ID: "acme-2"
+      TENANTS_CONFIG_1_DISPLAY_NAME: "Acme 2"
+      TENANTS_CONFIG_1_SMTP_HOST: "mailpit"
+      TENANTS_CONFIG_1_SMTP_PORT: "1025"
+      TENANTS_CONFIG_1_SMTP_SENDER: "acme-2@straightmail.local"
+      # -----------------------------------------------------------------------
+      # Template sources
+      # -----------------------------------------------------------------------
+      TEMPLATE_FILE_ENABLED: "true"
+      TEMPLATE_GIT_SYNC_ENABLED: "true"
+    volumes:
+      - ./data/sqlite:/data
+      - ./data/files:/resources/templates
+    ports:
+      - "50003:50003"
+      - "50004:50004"
+    depends_on:
+      mailpit:
+        condition: service_healthy
+    networks:
+      - straightmail
+
+networks:
+  straightmail:
+    driver: bridge
+
+volumes:
+  straightmail-apikey-sqlite:

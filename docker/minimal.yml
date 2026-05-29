@@ -1,0 +1,65 @@
+# =============================================================================
+# Mode: Minimal — No auth, no database, file templates
+# =============================================================================
+# Auth:      none (all API endpoints are open — AUTH_MODE=none)
+# Templates: file-based (../templates/ mounted at /resources/templates)
+#            git-sync enabled (no-op without tenants — no DB in this mode)
+# Database:  none (no JPA, no tenant filters)
+# Services:  backend + mailpit
+#
+# Start:  docker compose -f compose/minimal.yml up
+# API:    http://localhost:50003/api
+# Mails:  http://localhost:8025 (Mailpit web UI)
+# =============================================================================
+
+services:
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: straightmail-minimal-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    healthcheck:
+      test: [ "CMD", "curl", "-sf", "http://localhost:8025/api/v1/info" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - straightmail
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: straightmail-minimal-backend
+    restart: unless-stopped
+    environment:
+      # No 'database' profile → no JPA, no tenant context, no auth filters
+      AUTH_MODE: none
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      ENCRYPTION_KEY: "CHANGE_ME_GENERATE_RANDOM_KEY"
+      DEFAULT_SENDER: "test@straightmail.local"
+      CORS_ALLOWED_ORIGINS: "http://localhost:50003,http://localhost:4200"
+      # -----------------------------------------------------------------------
+      # Template sources
+      # -----------------------------------------------------------------------
+      TEMPLATE_FILE_ENABLED: "true"
+      TEMPLATE_GIT_SYNC_ENABLED: "true"
+    volumes:
+      - ./data/sqlite:/data
+      - ./data/files:/resources/templates
+    ports:
+      - "50003:50003"
+      - "50004:50004"
+    depends_on:
+      mailpit:
+        condition: service_healthy
+    networks:
+      - straightmail
+
+networks:
+  straightmail:
+    driver: bridge
