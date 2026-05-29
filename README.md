@@ -1,169 +1,243 @@
-# straightmail
+# <img src="frontend/public/logos/logo.svg" alt="straightmail" width="34"> straightmail
 
-[![CI](https://github.com/encircle360-oss/straightmail/actions/workflows/ci.yml/badge.svg)](https://github.com/encircle360-oss/straightmail/actions/workflows/ci.yml)
-[![Release](https://github.com/encircle360-oss/straightmail/actions/workflows/release.yml/badge.svg)](https://github.com/encircle360-oss/straightmail/actions/workflows/release.yml)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Container](https://img.shields.io/badge/ghcr.io-encircle360--oss%2Fstraightmail-blue?logo=docker)](https://github.com/encircle360-oss/straightmail/pkgs/container/straightmail)
-[![Matrix](https://img.shields.io/badge/Matrix-Join%20Chat-0dbd8b?logo=matrix&logoColor=white)](https://matrix.to/#/#oss:encircle360.com)
+[![Monorepo Full Build](https://github.com/encircle360-oss/straightmail/actions/workflows/monorepo.yml/badge.svg)](https://github.com/encircle360-oss/straightmail/actions/workflows/monorepo.yml)
+[![Backend Build](https://github.com/encircle360-oss/straightmail/actions/workflows/backend.yml/badge.svg)](https://github.com/encircle360-oss/straightmail/actions/workflows/backend.yml)
+[![Frontend Build](https://github.com/encircle360-oss/straightmail/actions/workflows/frontend.yml/badge.svg)](https://github.com/encircle360-oss/straightmail/actions/workflows/frontend.yml)
 
-A small Spring Boot service that exposes a REST API for sending emails. Templates are rendered with [Freemarker](https://freemarker.apache.org/) and translated with standard `messages.properties` bundles, so subjects, HTML bodies and plain-text fallbacks all flow through the same locale-aware pipeline.
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Java 21](https://img.shields.io/badge/Java-21-orange?logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5.7-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Angular](https://img.shields.io/badge/Angular-21.2-DD0031?logo=angular&logoColor=white)](https://angular.io)
+[![Matrix](https://img.shields.io/badge/Matrix-Join%20Chat-blue?logo=matrix&logoColor=white)](https://matrix.to/#/#oss:encircle360.com)
 
-Maintained and sponsored by [encircle360 GmbH](https://encircle360.com) together with the open source community, partners and friends.
+**straightmail** is a mail sending API with template and i18n support, combined with a modern Angular administration
+console for managing email templates, rendering, and sending operations.
 
-> **Project moved to GitHub.** The legacy GitLab repository at `gitlab.com/encircle360-oss/straightmail/straightmail` is archived and no longer receives updates. Container images are now published to GitHub Container Registry at `ghcr.io/encircle360-oss/straightmail`.
+<img src="frontend/docs/files/1%20dashboard.png" alt="Dashboard" width="800">
 
-## Getting started
+<table width="800">
+  <tr>
+    <td valign="top" width="25%" align="center">
+      <img src="frontend/docs/files/2%20templates.png" alt="Edit Template" width="190">
+      <br><sub>Edit Template</sub>
+    </td>
+    <td valign="top" width="25%" align="center">
+      <img src="frontend/docs/files/3%20edit%20template.png" alt="Edit Template" width="190">
+      <br><sub>Edit Template</sub>
+    </td>
+    <td valign="top" width="25%" align="center">
+      <img src="frontend/docs/files/4%20render%20preview%20html.png" alt="Render Preview HTML" width="190">
+      <br><sub>Render Preview</sub>
+    </td>
+    <td valign="top" width="25%" rowspan="2" align="center" valign="top">
+      <img src="frontend/docs/files/9%20mobile.png" alt="Mobile View" width="100">
+      <br><sub>Mobile View</sub>
+      <br><br>
+      <img src="frontend/docs/files/10%20mobile%20nav.png" alt="Mobile Navigation" width="100">
+      <br><sub>Mobile Navigation</sub>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top" width="25%" align="center">
+      <img src="frontend/docs/files/6%20send%20mail%20template.png" alt="Send Mail Template" width="190">
+      <br><sub>Send Mail</sub>
+    </td>
+    <td valign="top" width="25%" align="center">
+      <img src="frontend/docs/files/8%20Help.png" alt="Help Panel" width="190">
+      <br><sub>Help Panel</sub>
+    </td>
+    <td valign="top" width="25%" align="center">
+      <img src="frontend/docs/files/7%20mail.png" alt="Mail Output" width="190">
+      <br><sub>Mail Output</sub>
+    </td>
+  </tr>
+</table>
 
-Pull and run the prebuilt image:
+## straightmail Monorepo
+
+This repository contains the straightmail backend and admin frontend as a monorepo.
+
+```
+straightmail/
+├── backend/          # Spring Boot Application (Java 21)
+├── frontend/         # Angular Admin Frontend
+├── docker/           # Mode-specific Docker Compose stacks
+├── .github/workflows # CI/CD pipelines
+└── README.md
+```
+
+## Getting Started
+
+### Local Development
+
+**Terminal 1 — Backend:**
 
 ```bash
-docker run -p 50003:50003 -p 50004:50004 \
-    --env SMTP_HOST=host.docker.internal \
-    --env SMTP_USER=foo \
-    --env SMTP_PASSWORD=bar \
-    --env SMTP_PORT=1025 \
-    --env DEFAULT_SENDER=noreply@example.com \
-    --env SMTP_ENABLE_TLS=true \
-    --env SMTP_ENABLE_SSL=false \
-    --env SPRING_PROFILES_ACTIVE=development \
-    ghcr.io/encircle360-oss/straightmail:latest
+cd backend
+./gradlew bootRun
+# API available at http://localhost:50003/api/
 ```
 
-`DEFAULT_SENDER` is used when a request does not specify a `sender`. For SSL use `SMTP_ENABLE_SSL=true` and `SMTP_ENABLE_TLS=false`; for STARTTLS keep the inverse.
-
-Open `http://localhost:50003/swagger-ui/index.html` to explore the REST API. Switch the active profile to `production` for production deployments — Swagger UI is otherwise reachable.
-
-This service is intended to run inside an internal network and should not be exposed to the public internet. There is no built-in authentication on its API.
-
-## Sending an email with a file-based template
-
-Templates live in `/resources/templates/` and consist of two or three files per template id:
-
-- `<templateId>_subject.ftl` — the subject line (HTML is stripped)
-- `<templateId>.ftl` — the HTML body
-- `<templateId>_plain.ftl` — optional plain-text body
+**Terminal 2 — Frontend:**
 
 ```bash
-curl -X POST http://localhost:50003/ \
-  -H "Content-Type: application/json" \
-  -d '{
-        "recipients": ["user@example.com"],
-        "sender": "noreply@example.com",
-        "senderName": "Straightmail",
-        "model": { "name": "World" },
-        "locale": "de",
-        "emailTemplateId": "default"
-      }'
+cd frontend
+npm install
+npm start
+# Dev server at http://localhost:4200 (proxies /api → :50003)
 ```
 
-## Sending an email with an inline template
+### Docker Compose
+
+The `docker/` directory contains four ready-to-use Compose stacks:
+
+| Stack               | Auth            | Database   | Templates       |
+|---------------------|-----------------|------------|-----------------|
+| `minimal.yml`       | None (open)     | —          | File-based only |
+| `apikey-sqlite.yml` | API-Key         | SQLite     | File + Database |
+| `oidc-sqlite.yml`   | OIDC / Keycloak | SQLite     | File + Database |
+| `oidc-postgres.yml` | OIDC / Keycloak | PostgreSQL | File + Database |
+
+**Prerequisite:** Build the backend JAR first:
 
 ```bash
-curl -X POST http://localhost:50003/inline \
-  -H "Content-Type: application/json" \
-  -d '{
-        "recipients": ["user@example.com"],
-        "sender": "noreply@example.com",
-        "subject": "Hello ${name}",
-        "emailTemplate": "<p>Hello <b>${name}</b></p>",
-        "model": { "name": "World" },
-        "locale": "de"
-      }'
+cd backend && ./gradlew bootJar
 ```
 
-## Sender display name
-
-The optional `senderName` field controls the `From` header. When set, the header renders as `Display Name <noreply@example.com>` instead of the bare address.
-
-## Attachments
-
-Pass attachments as an array of objects. The `content` field is a base64-encoded byte string.
-
-```json
-{
-  "attachments": [
-    { "filename": "picture.jpg", "mimeType": "image/jpeg", "content": "IG51bGw=" }
-  ]
-}
-```
-
-## Customising templates and translations
-
-Build a thin image on top of the upstream one:
-
-```Dockerfile
-FROM ghcr.io/encircle360-oss/straightmail:latest
-ADD templates /resources/templates
-ADD i18n /resources/i18n
-```
-
-See [src/main/resources/templates](src/main/resources/templates) and [src/main/resources/i18n](src/main/resources/i18n) for the expected file layout. The `emailTemplateId` in API requests maps to the template filename without extension (e.g. `emailConfirmation.ftl` → `"emailConfirmation"`).
-
-## Service health
-
-If the management port is mapped to your host, `http://localhost:50004/actuator/health` returns the liveness/readiness state.
-
-## Building from source
+Start a stack (example — OIDC + SQLite):
 
 ```bash
-./gradlew bootJar
+cd docker && docker compose -f oidc-sqlite.yml up
 ```
 
-Requires JDK 21 or newer. Skip tests with `-x test`.
+See [docker/README.md](docker/README.md) for detailed configuration per stack.
 
-## Contributing & community
+### Full Production Build (Backend serves Frontend)
 
-We welcome contributors! Whether you want to:
+```bash
+cd backend
+./gradlew build
+# Angular is built and embedded into the Spring Boot JAR
+```
 
-- **Submit pull requests** for bug fixes, features or documentation improvements
-- **Help with testing** and quality assurance
-- **Improve documentation** and examples
-- **Report bugs** or suggest new features
-- **Become a maintainer** for the project
+Skip the Angular build (backend-only):
 
-Every contribution is valuable. You don't need to be an expert — we're happy to help you get started.
+```bash
+SKIP_FRONTEND_BUILD=true ./gradlew build
+```
 
-### How to contribute
+## Template Sources
 
-1. **Fork the repository** and create a feature branch
-2. **Make your changes** (code, docs, tests)
-3. **Test your changes** locally with `./gradlew build`
-4. **Submit a Pull Request** with a clear description
-5. **Engage in the review** — we'll work with you to get the change merged
+straightmail supports three independent template sources that can be combined:
 
-### Becoming a maintainer
+| Source   | Description                                                     | Enabled by default                     |
+|----------|-----------------------------------------------------------------|----------------------------------------|
+| Database | Templates stored in SQLite / PostgreSQL (full CRUD via UI/API)  | Yes (profile `database`)               |
+| File     | Read-only `.ftl` files mounted from the host filesystem         | Yes (`TEMPLATE_FILE_ENABLED=true`)     |
+| Git-sync | Templates cloned from a per-tenant Git repository on a schedule | Yes (`TEMPLATE_GIT_SYNC_ENABLED=true`) |
 
-Interested in co-maintaining this project? Show your interest by contributing pull requests and helping in issues, then start a discussion in [GitHub Discussions](https://github.com/encircle360-oss/straightmail/discussions) so we can talk about it.
+### File Templates
 
-## Support & community
+Place FreeMarker templates under `templates/{tenant-id}/` in the project root. The directory is mounted into the
+container at `/resources/templates`.
 
-- **Matrix chat**: join [#oss:encircle360.com](https://matrix.to/#/#oss:encircle360.com) to talk to maintainers and other users
-- **Bug reports & feature requests**: open a [GitHub Issue](https://github.com/encircle360-oss/straightmail/issues)
-- **General questions and ideas**: start a [GitHub Discussion](https://github.com/encircle360-oss/straightmail/discussions)
+```
+templates/
+├── acme-1/
+│   ├── welcome.ftl           # HTML body
+│   ├── welcome_subject.ftl   # Subject line
+│   └── welcome_plain.ftl     # Plain-text body (optional)
+└── acme-2/
+    └── ...
+```
 
-For professional support, consulting or custom development, reach out via our website at [encircle360.com](https://encircle360.com).
+| Environment variable    | Default                | Description                          |
+|-------------------------|------------------------|--------------------------------------|
+| `TEMPLATE_FILE_ENABLED` | `false`                | Enable file-based template source    |
+| `TEMPLATE_FILE_PATH`    | `/resources/templates` | Root directory scanned for templates |
 
-## Disclaimer
+### Git-Sync Templates
 
-This software is provided "AS IS" without warranty of any kind, either express or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, or non-infringement.
+When enabled, the backend periodically clones a Git repository per tenant and loads `.ftl` files from the working tree.
+The Git repo URL and optional access token are configured per tenant via the UI or API (stored encrypted in the
+database).
 
-While we aim to keep the project healthy and well-tested, you acknowledge that:
+| Environment variable        | Default       | Description                                          |
+|-----------------------------|---------------|------------------------------------------------------|
+| `TEMPLATE_GIT_SYNC_ENABLED` | `false`       | Enable Git-sync template source                      |
+| `GIT_SYNC_CRON`             | `0 0 * * * *` | Cron expression for the sync job (hourly by default) |
+| `GIT_SYNC_LOCK_MIN`         | `PT50M`       | Minimum lock duration (ShedLock)                     |
+| `GIT_SYNC_LOCK_MAX`         | `PT1H`        | Maximum lock duration (ShedLock)                     |
 
-- You use straightmail at your own risk.
-- We recommend thorough testing in non-production environments before relying on it in production.
-- The project may contain bugs or security issues. There is no built-in API authentication; do not expose it to the public internet.
-- We are not liable for damages or losses resulting from its use.
+Both sources are enabled in all Docker Compose variants. To disable one, set the corresponding variable to `"false"`.
 
-For deployments that require guaranteed support or SLAs, please contact us via [encircle360.com](https://encircle360.com).
+## Authentication
 
-## License
+straightmail supports two authentication modes configured at startup:
 
-Apache License 2.0 — see [LICENSE](LICENSE).
+| Mode       | `AUTH_MODE` value  | Description                                                                                                                                              |
+|------------|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| OIDC / JWT | `oidc` (default)   | JWT from an OIDC provider (e.g. Keycloak). Roles are derived from `realm_access.roles` → `ROLE_*`. The tenant is resolved from a configurable JWT claim. |
+| API-Key    | `api-key`          | `X-API-KEY` request header carrying a global or per-tenant SHA-256 hash. The tenant is determined by a key lookup in the database.                       |
+| None       | `none`             | All endpoints are open. Suitable for internal services with network-level protection.                                                                     |
 
-## Maintainers
+Key environment variables:
 
-This project is maintained and sponsored by **[encircle360 GmbH](https://encircle360.com)**, providing enterprise-grade Kubernetes and cloud-native solutions.
+| Variable               | Default | Description                                                                |
+|------------------------|---------|----------------------------------------------------------------------------|
+| `AUTH_MODE`            | `oidc`  | Authentication mode: `oidc`, `api-key`, or `none`                          |
+| `JWT_TENANT_CLAIM`     | —       | JWT claim that contains the single tenant ID                               |
+| `JWT_TENANT_IDS_CLAIM` | —       | JWT claim that contains a list of accessible tenant IDs                    |
+| `API_KEY`              | —       | Global API key (SHA-256 hash) used when the `database` profile is inactive |
 
-## Credits
+## Operation Modes (Spring Profiles)
 
-Thanks to all contributors, partners and the wider open source community for making this project possible.
+The backend behaviour is controlled by Spring profiles set via `SPRING_PROFILES_ACTIVE`:
+
+| Profile      | Effect                                                                                                                                                                                                                                |
+|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `database`   | Activates database storage for templates and SMTP config, enables the Tenant-CRUD API (`/v1/tenants`), and per-tenant Git-sync. Without this profile the backend runs file-only with a global SMTP config from environment variables. |
+| `production` | Disables Swagger UI / API docs (`/swagger-ui`, `/v3/api-docs`), tunes Tomcat thread pool (`max=50`, `min-spare=10`).                                                                                                                  |
+| `dev`        | Local development overrides (localhost SMTP relay).                                                                                                                                                                                   |
+
+Example — full local stack:
+
+```bash
+SPRING_PROFILES_ACTIVE=dev,database ./gradlew bootRun
+```
+
+## Multi-Tenancy
+
+When running with the `database` profile, straightmail is fully multi-tenant:
+
+- **Per-tenant SMTP** — Each tenant configures its own SMTP server, credentials, and sender address via the UI or API.
+- **Per-tenant Git-sync** — Each tenant can point to an independent Git repository for template storage, synced on a
+  configurable cron schedule (ShedLock protected for HA setups).
+- **Infrastructure-as-code provisioning** — Tenants declared under `tenants.config.*` in `application.yml` are
+  automatically created or updated at startup (`TenantReconciliationService`). The `default` tenant is never removed,
+  enabling zero-touch tenant provisioning without manual API calls.
+- **Encryption at rest** — All secrets (SMTP password, Git token, API key) are encrypted using AES-256-GCM by the
+  built-in `EncryptionService`. Secrets are never returned in plain text by the API.
+
+## Documentation
+
+- [Backend README](backend/README.md)
+- [Frontend README](frontend/README.md)
+- [API Endpoints](http://localhost:50003/swagger-ui.html)
+
+## Ports
+
+| Service     | Port(s)     |
+|-------------|-------------|
+| Backend API | 50003       |
+| Management  | 50004       |
+| Frontend    | 4200        |
+| PostgreSQL  | 5432        |
+| Mailpit     | 1025 / 8025 |
+| pgAdmin     | 5050        |
+
+## encircle360 OSS Matrix Channel
+
+Join our community for support, discussions, and updates regarding our open-source projects.
+
+[![Matrix](https://img.shields.io/badge/Matrix-Join%20Chat-blue?logo=matrix&logoColor=white)](https://matrix.to/#/#oss:encircle360.com)
