@@ -1,0 +1,345 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 0001-create-templates-table
+      author: straightmail
+      changes:
+        - createTable:
+            tableName: templates
+            columns:
+              - column:
+                  name: id
+                  type: varchar(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: subject
+                  type: varchar(255)
+              - column:
+                  name: html
+                  type: text
+              - column:
+                  name: plain
+                  type: text
+              - column:
+                  name: locale
+                  type: varchar(20)
+
+        - createTable:
+            tableName: template_tags
+            columns:
+              - column:
+                  name: template_id
+                  type: varchar(36)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_template_tags_template
+                    references: templates(id)
+                    deleteCascade: true
+              - column:
+                  name: tag
+                  type: varchar(255)
+
+        - createIndex:
+            indexName: idx_template_tags_tag
+            tableName: template_tags
+            columns:
+              - column:
+                  name: tag
+
+        - createIndex:
+            indexName: idx_template_tags_template_id
+            tableName: template_tags
+            columns:
+              - column:
+                  name: template_id
+
+  - changeSet:
+      id: 0002-add-multi-tenancy
+      author: straightmail
+      changes:
+        - createTable:
+            tableName: tenants
+            columns:
+              - column:
+                  name: slug
+                  type: varchar(63)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: display_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: smtp_host
+                  type: varchar(255)
+              - column:
+                  name: smtp_port
+                  type: integer
+              - column:
+                  name: smtp_user
+                  type: varchar(255)
+              - column:
+                  name: smtp_password
+                  type: varchar(512)
+              - column:
+                  name: smtp_sender
+                  type: varchar(255)
+              - column:
+                  name: smtp_tls
+                  type: integer
+                  defaultValueNumeric: 0
+              - column:
+                  name: smtp_ssl
+                  type: integer
+                  defaultValueNumeric: 0
+              - column:
+                  name: git_token
+                  type: varchar(512)
+              - column:
+                  name: git_repo_url
+                  type: varchar(1024)
+              - column:
+                  name: active
+                  type: integer
+                  defaultValueNumeric: 1
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: tenant_git_branches
+            columns:
+              - column:
+                  name: tenant_slug
+                  type: varchar(63)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_tenant_git_branches
+                    references: "tenants(slug)"
+                    deleteCascade: true
+              - column:
+                  name: branch
+                  type: varchar(255)
+
+        - createTable:
+            tableName: shedlock
+            columns:
+              - column:
+                  name: name
+                  type: varchar(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: lock_until
+                  type: timestamp
+              - column:
+                  name: locked_at
+                  type: timestamp
+              - column:
+                  name: locked_by
+                  type: varchar(255)
+
+        - insert:
+            tableName: tenants
+            columns:
+              - column:
+                  name: slug
+                  value: default
+              - column:
+                  name: display_name
+                  value: "Default"
+              - column:
+                  name: active
+                  valueNumeric: 1
+
+        - addColumn:
+            tableName: templates
+            columns:
+              - column:
+                  name: tenant_id
+                  type: varchar(63)
+                  defaultValue: "default"
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            indexName: uq_templates_tenant_name_locale
+            tableName: templates
+            unique: true
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: name
+              - column:
+                  name: locale
+
+        - createIndex:
+            indexName: idx_templates_tenant_id
+            tableName: templates
+            columns:
+              - column:
+                  name: tenant_id
+
+  - changeSet:
+      id: 0003-per-tenant-api-keys
+      author: straightmail
+      changes:
+        - addColumn:
+            tableName: tenants
+            columns:
+              - column:
+                  name: api_key_hash
+                  type: varchar(64)
+
+  - changeSet:
+      id: 0004-add-tenant-logo-url
+      author: straightmail
+      changes:
+        - addColumn:
+            tableName: tenants
+            columns:
+              - column:
+                  name: logo_url
+                  type: varchar(2048)
+
+  - changeSet:
+      id: 0005-add-tenant-brand-color
+      author: straightmail
+      changes:
+        - addColumn:
+            tableName: tenants
+            columns:
+              - column:
+                  name: brand_color
+                  type: varchar(7)
+
+  - changeSet:
+      id: 0006-add-git-sync-status
+      author: straightmail
+      changes:
+        - createTable:
+            tableName: git_sync_status
+            columns:
+              - column:
+                  name: tenant_id
+                  type: varchar(63)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: last_sync_at
+                  type: timestamp
+              - column:
+                  name: result
+                  type: varchar(16)
+              - column:
+                  name: error_message
+                  type: varchar(1024)
+
+  - changeSet:
+      id: 0007-add-git-template-cache
+      author: straightmail
+      changes:
+        - createTable:
+            tableName: git_template_cache
+            columns:
+              - column:
+                  name: id
+                  type: varchar(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: varchar(63)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: branch
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: branch_order
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: template_name
+                  type: varchar(512)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: html
+                  type: text
+              - column:
+                  name: subject
+                  type: varchar(255)
+              - column:
+                  name: plain
+                  type: text
+
+        - createIndex:
+            indexName: uq_git_template_cache
+            tableName: git_template_cache
+            unique: true
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: branch
+              - column:
+                  name: template_name
+
+        - createIndex:
+            indexName: idx_git_template_cache_tenant_branch
+            tableName: git_template_cache
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: branch
+
+        - createIndex:
+            indexName: idx_git_template_cache_tenant_id
+            tableName: git_template_cache
+            columns:
+              - column:
+                  name: tenant_id
+
+  - changeSet:
+      id: 0008-cleanup-git-data-for-tenants-without-repo
+      author: straightmail
+      comment: >
+        Removes orphaned git_template_cache, git_sync_status, and tenant_git_branches rows
+        for tenants that no longer have a git_repo_url configured.
+      changes:
+        - sql:
+            sql: >
+              DELETE FROM git_template_cache
+              WHERE tenant_id IN (
+                SELECT slug FROM tenants WHERE git_repo_url IS NULL OR git_repo_url = ''
+              );
+        - sql:
+            sql: >
+              DELETE FROM git_sync_status
+              WHERE tenant_id IN (
+                SELECT slug FROM tenants WHERE git_repo_url IS NULL OR git_repo_url = ''
+              );
+        - sql:
+            sql: >
+              DELETE FROM tenant_git_branches
+              WHERE tenant_slug IN (
+                SELECT slug FROM tenants WHERE git_repo_url IS NULL OR git_repo_url = ''
+              );
