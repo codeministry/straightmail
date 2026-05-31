@@ -45,6 +45,3 @@ Plans
 # Docker local data
 data/
 docker/data/
-
-# Local developer overrides (never commit real credentials)
-backend/src/main/resources/application-local.yml
