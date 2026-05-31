@@ -18,8 +18,8 @@ console for managing email templates, rendering, and sending operations.
 <table width="800">
   <tr>
     <td valign="top" width="25%" align="center">
-      <img src="frontend/docs/files/templates.png" alt="Edit Template" width="190">
-      <br><sub>Edit Template</sub>
+      <img src="frontend/docs/files/templates.png" alt="Templates" width="190">
+      <br><sub>Templates</sub>
     </td>
     <td valign="top" width="25%" align="center">
       <img src="frontend/docs/files/edit%20template.png" alt="Edit Template" width="190">
