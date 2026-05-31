@@ -95,7 +95,7 @@ services:
       OIDC_JWK_URI: "http://keycloak:8080/realms/straightmail/protocol/openid-connect/certs"
       JWT_TENANT_IDS_CLAIM: "tenant_ids"
       # Stable dev encryption key — change for any non-local environment
-      ENCRYPTION_KEY: "CHANGE_ME_GENERATE_RANDOM_KEY"
+      ENCRYPTION_KEY: "wE+DkEnrOHduqYmJc4Pt/rPefrH2BznkwL6mfxOArCk="
       DB_URL: "jdbc:sqlite:/data/straightmail.db?journal_mode=WAL"
       SMTP_HOST: straightmail-oidc-mailpit
       SMTP_PORT: 1025

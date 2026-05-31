@@ -165,9 +165,10 @@ docker compose -f compose/<mode>.yml up
 
 ### Encryption Key
 
-All stacks use the same development key (`ENCRYPTION_KEY`) from `application.yml`.
-This key **must not** be used for production or shared environments. For staging/prod,
-set a dedicated 32-byte Base64 key:
+Each stack sets the encryption key via `services.backend.environment.ENCRYPTION_KEY`
+in its compose file (`application.yml` only supplies the fallback default). The
+shipped value is a development placeholder and **must not** be used for production
+or shared environments. For staging/prod, set a dedicated 32-byte Base64 key:
 
 ```bash
 # Generate a new key:

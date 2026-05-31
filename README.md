@@ -70,6 +70,22 @@ straightmail/
 
 ### Local Development
 
+**One-time setup — backend local config:**
+
+The backend reads local overrides from `backend/src/main/resources/application-local.yml`,
+which is gitignored. Create it from the example and generate an encryption key:
+
+```bash
+cd backend/src/main/resources
+cp application-local.yml.example application-local.yml
+
+# Generate a random AES-256 key and paste it into the `encryption.key` value
+openssl rand -base64 32
+```
+
+Open `application-local.yml` and replace `encryption.key: CHANGE_ME_GENERATE_RANDOM_KEY`
+with the generated value. Adjust SMTP, auth, and tenant settings as needed.
+
 **Terminal 1 — Backend:**
 
 ```bash
@@ -109,6 +125,11 @@ Start a stack (example — OIDC + SQLite):
 ```bash
 cd docker && docker compose -f oidc-sqlite.yml up
 ```
+
+> **Encryption key:** Each stack sets `services.backend.environment.ENCRYPTION_KEY`
+> in its compose file. The default is a placeholder — generate a real 32-byte key
+> with `openssl rand -base64 32` and replace it before any shared or production use.
+> See [docker/README.md → Encryption Key](docker/README.md#encryption-key).
 
 See [docker/README.md](docker/README.md) for detailed configuration per stack.
 
