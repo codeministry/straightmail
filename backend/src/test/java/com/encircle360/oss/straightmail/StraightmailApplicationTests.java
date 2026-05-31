@@ -2,8 +2,8 @@ package com.encircle360.oss.straightmail;
 
 import com.encircle360.oss.straightmail.dto.email.EmailInlineTemplateRequestDTO;
 import com.encircle360.oss.straightmail.dto.email.EmailTemplateFileRequestDTO;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -52,7 +52,7 @@ class StraightmailApplicationTests extends AbstractTest {
         HashMap<String, JsonNode> testMap = new HashMap<>();
         JsonNodeFactory nodeFactory = JsonNodeFactory.instance;
         testMap.put("number", nodeFactory.numberNode(200.8));
-        testMap.put("string", nodeFactory.textNode("I'm a string"));
+        testMap.put("string", nodeFactory.stringNode("I'm a string"));
         testMap.put("bool", nodeFactory.booleanNode(false));
         testMap.put("object", nodeFactory.pojoNode(testPojo));
 

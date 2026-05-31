@@ -4,13 +4,14 @@ import com.encircle360.oss.straightmail.model.Template;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.PathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 /**
  * {@link TemplateLoader} implementation that loads templates from the filesystem or classpath.
@@ -45,7 +46,7 @@ public class FileTemplateLoader extends AbstractTemplateLoader {
     @PostConstruct
     public void logTemplates() throws IOException {
         log.info("FileTemplateLoader initialisation started...");
-        Resource folder = new PathResource("/resources/templates/");
+        Resource folder = new FileSystemResource("/resources/templates/");
         String fileName = folder.getFile().getPath();
         Path path = Path.of(fileName);
 
@@ -54,9 +55,9 @@ public class FileTemplateLoader extends AbstractTemplateLoader {
             return;
         }
 
-        Files.walk(path).toList()
-                .stream()
-                .filter(file -> file.getFileName().toString().contains("."))
-                .forEach(file -> log.info("Found filesystem template file {}", file.toAbsolutePath()));
+        try (Stream<Path> files = Files.walk(path)) {
+            files.filter(file -> file.getFileName().toString().contains("."))
+                    .forEach(file -> log.info("Found filesystem template file {}", file.toAbsolutePath()));
+        }
     }
 }

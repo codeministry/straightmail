@@ -1,7 +1,7 @@
 package com.encircle360.oss.straightmail.wrapper.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 import freemarker.core.CollectionAndSequence;
 import freemarker.ext.beans.BeanModel;
 import freemarker.ext.beans.BeansWrapper;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * FreeMarker template model for Jackson {@link com.fasterxml.jackson.databind.node.ObjectNode}.
+ * FreeMarker template model for Jackson {@link tools.jackson.databind.node.ObjectNode}.
  *
  * <p>Supports key-based property access (e.g. {@code ${obj.fieldName}} in templates),
  * iteration over keys and values, and size/empty checks.
@@ -57,7 +57,7 @@ public class JsonObjectNodeModel extends BeanModel {
     @Override
     public TemplateCollectionModel keys() {
         ObjectNode objectNode = (ObjectNode) object;
-        return new IteratorModel(objectNode.fieldNames(), wrapper);
+        return new IteratorModel(objectNode.propertyNames().iterator(), wrapper);
     }
 
     @Override
@@ -65,7 +65,7 @@ public class JsonObjectNodeModel extends BeanModel {
         ObjectNode objectNode = (ObjectNode) object;
 
         List<JsonNode> values = new ArrayList<>(size());
-        final Iterator<Map.Entry<String, JsonNode>> it = objectNode.fields();
+        final Iterator<Map.Entry<String, JsonNode>> it = objectNode.properties().iterator();
         it.forEachRemaining(next -> values.add(next.getValue()));
 
         SimpleSequence simpleSequence = new SimpleSequence(values, wrapper);

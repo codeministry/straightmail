@@ -1,13 +1,13 @@
 package com.encircle360.oss.straightmail.wrapper.model;
 
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.node.StringNode;
 import freemarker.ext.beans.BeanModel;
 import freemarker.ext.beans.BeansWrapper;
 import freemarker.ext.util.ModelFactory;
 import freemarker.template.TemplateScalarModel;
 
 /**
- * FreeMarker template model for Jackson {@link com.fasterxml.jackson.databind.node.TextNode}.
+ * FreeMarker template model for Jackson {@link tools.jackson.databind.node.StringNode}.
  * Exposes the node's string value via {@link TemplateScalarModel#getAsString()}.
  */
 public class JsonTextNodeModel extends BeanModel implements TemplateScalarModel {
@@ -19,7 +19,7 @@ public class JsonTextNodeModel extends BeanModel implements TemplateScalarModel 
 
     @Override
     public String getAsString() {
-        TextNode textNode = ((TextNode) object);
-        return textNode.asText();
+        StringNode stringNode = ((StringNode) object);
+        return stringNode.asString();
     }
 }

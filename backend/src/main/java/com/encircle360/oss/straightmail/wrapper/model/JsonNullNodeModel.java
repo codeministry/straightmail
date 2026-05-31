@@ -3,7 +3,7 @@ package com.encircle360.oss.straightmail.wrapper.model;
 import freemarker.ext.util.ModelFactory;
 
 /**
- * FreeMarker template model factory for Jackson {@link com.fasterxml.jackson.databind.node.NullNode}.
+ * FreeMarker template model factory for Jackson {@link tools.jackson.databind.node.NullNode}.
  *
  * <p>JSON {@code null} values are mapped to FreeMarker's {@code null} (i.e. the factory returns
  * {@code null} from {@code createModel}), which FreeMarker treats as a missing/null value in templates.

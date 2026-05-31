@@ -4,8 +4,8 @@ import com.encircle360.oss.straightmail.dto.template.CreateUpdateTemplateDTO;
 import com.encircle360.oss.straightmail.dto.template.RenderedTemplateDTO;
 import com.encircle360.oss.straightmail.dto.template.TemplateDTO;
 import com.encircle360.oss.straightmail.dto.template.TemplateRenderRequestDTO;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,7 +34,7 @@ class RenderTest extends AbstractTest {
         TemplateDTO templateDTO = resultToObject(result, TemplateDTO.class);
 
         HashMap<String, JsonNode> nodeHashMap = new HashMap<>();
-        nodeHashMap.put("foo", new TextNode("bar"));
+        nodeHashMap.put("foo", JsonNodeFactory.instance.stringNode("bar"));
 
         TemplateRenderRequestDTO templateRenderRequestDTO = TemplateRenderRequestDTO
                 .builder()
@@ -64,7 +64,7 @@ class RenderTest extends AbstractTest {
                 .builder()
                 .templateId(templateDTO.getId())
                 .build();
-        MvcResult renderResult = post("/v1/render", renderRequest, status().isUnprocessableEntity());
+        MvcResult renderResult = post("/v1/render", renderRequest, status().isUnprocessableContent());
 
         Map<?, ?> errorBody = resultToObject(renderResult, Map.class);
         Assertions.assertNotNull(errorBody.get("message"), "Error response must contain a 'message' field");

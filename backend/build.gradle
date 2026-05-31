@@ -1,5 +1,5 @@
 plugins {
-    id "org.springframework.boot" version "3.5.7"
+    id "org.springframework.boot" version "4.0.6"
     id "io.spring.dependency-management" version "1.1.7"
     id "java"
     id "jacoco"
@@ -28,17 +28,19 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'org.xerial:sqlite-jdbc:3.49.1.0'
-    implementation 'org.hibernate.orm:hibernate-community-dialects:6.6.50.Final'
+    implementation 'org.hibernate.orm:hibernate-community-dialects:7.2.12.Final'
     implementation 'org.liquibase:liquibase-core'
+    // Spring Boot 4 modularization: Liquibase auto-configuration extracted into its own module
+    implementation 'org.springframework.boot:spring-boot-liquibase'
 
     // jsoup for cleaning html mail to text
-    implementation group: 'org.jsoup', name: 'jsoup', version: '1.21.1'
+    implementation group: 'org.jsoup', name: 'jsoup', version: '1.22.2'
 
     // lombok & mapstruct
-    compileOnly "org.projectlombok:lombok:1.18.38"
-    annotationProcessor 'org.projectlombok:lombok:1.18.38'
-    testCompileOnly 'org.projectlombok:lombok:1.18.38'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.38'
+    compileOnly "org.projectlombok:lombok:1.18.46"
+    annotationProcessor 'org.projectlombok:lombok:1.18.46'
+    testCompileOnly 'org.projectlombok:lombok:1.18.46'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.46'
 
     implementation 'org.mapstruct:mapstruct:1.6.3'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
@@ -48,23 +50,25 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers:2.0.5'
     testImplementation 'org.testcontainers:testcontainers-junit-jupiter:2.0.5'
 
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    // Jackson 3 (Spring Boot 4): java.time support is built-in, no separate jsr310 module needed.
 
-    // OpenAPI documentation - compatible with Spring Boot 3.5.x
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17'
+    // OpenAPI documentation - compatible with Spring Boot 4.x (Jackson 3)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
 
     // JGit for Git template sync
-    implementation 'org.eclipse.jgit:org.eclipse.jgit:7.3.0.202506031305-r'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:7.6.0.202603022253-r'
 
     // ShedLock for distributed scheduling (HA-safe git-sync)
-    implementation 'net.javacrumbs.shedlock:shedlock-spring:6.10.0'
-    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.10.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:7.7.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.7.0'
 
     // Observability: Micrometer tracing with OpenTelemetry bridge and OTLP exporter
     implementation 'io.micrometer:micrometer-tracing-bridge-otel'
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 
     testImplementation('org.springframework.boot:spring-boot-starter-test')
+    // Spring Boot 4 modularization: MockMvc / WebMvc test slice extracted into its own starter
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 }
 
 test {

@@ -3,7 +3,7 @@ package com.encircle360.oss.straightmail;
 import com.encircle360.oss.straightmail.dto.status.FileStatusDTO;
 import com.encircle360.oss.straightmail.dto.status.StatusDTO;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MvcResult;

@@ -1,8 +1,8 @@
 package com.encircle360.oss.straightmail;
 
 import com.encircle360.oss.straightmail.dto.email.EmailInlineTemplateRequestDTO;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpMethod;
@@ -42,7 +42,7 @@ class TenantSenderEnforcementTest extends AbstractTest {
         }
 
         HashMap<String, JsonNode> model = new HashMap<>();
-        model.put("value", JsonNodeFactory.instance.textNode("test"));
+        model.put("value", JsonNodeFactory.instance.stringNode("test"));
 
         EmailInlineTemplateRequestDTO emailRequest = EmailInlineTemplateRequestDTO.builder()
                 .recipients(List.of("recipient@test.com"))
@@ -68,12 +68,12 @@ class TenantSenderEnforcementTest extends AbstractTest {
         boolean emailFound = false;
         for (JsonNode message : messages) {
             JsonNode subjectNode = message.get("Subject");
-            if (subjectNode == null || !"Tenant Sender Enforcement Test".equals(subjectNode.asText())) continue;
+            if (subjectNode == null || !"Tenant Sender Enforcement Test".equals(subjectNode.asString())) continue;
 
             emailFound = true;
             JsonNode fromNode = message.get("From");
             assertNotNull(fromNode, "From field must be present");
-            String from = fromNode.get("Address").asText();
+            String from = fromNode.get("Address").asString();
             assertTrue(from.contains("noreply@tenant.com"),
                     "Expected From to contain tenant-configured 'noreply@tenant.com' but was: " + from);
             assertFalse(from.contains("caller-provided@test.com"),

@@ -1,7 +1,7 @@
 package com.encircle360.oss.straightmail.dto.email;
 
 import com.encircle360.oss.straightmail.config.EmailRegex;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

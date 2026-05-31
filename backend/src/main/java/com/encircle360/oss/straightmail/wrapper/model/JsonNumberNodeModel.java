@@ -1,13 +1,13 @@
 package com.encircle360.oss.straightmail.wrapper.model;
 
-import com.fasterxml.jackson.databind.node.NumericNode;
+import tools.jackson.databind.node.NumericNode;
 import freemarker.ext.beans.BeanModel;
 import freemarker.ext.beans.BeansWrapper;
 import freemarker.ext.util.ModelFactory;
 import freemarker.template.TemplateNumberModel;
 
 /**
- * FreeMarker template model for Jackson {@link com.fasterxml.jackson.databind.node.NumericNode}.
+ * FreeMarker template model for Jackson {@link tools.jackson.databind.node.NumericNode}.
  * Exposes the node's numeric value via {@link TemplateNumberModel#getAsNumber()}.
  */
 public class JsonNumberNodeModel extends BeanModel implements TemplateNumberModel {

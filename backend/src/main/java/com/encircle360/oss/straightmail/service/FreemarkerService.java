@@ -2,7 +2,7 @@ package com.encircle360.oss.straightmail.service;
 
 import com.encircle360.oss.straightmail.util.FakeLocaleHttpServletRequest;
 import com.encircle360.oss.straightmail.wrapper.JsonNodeObjectWrapper;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;

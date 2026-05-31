@@ -10,7 +10,7 @@ import com.encircle360.oss.straightmail.tenant.TenantContext;
 import com.encircle360.oss.straightmail.tenant.mail.ConfigBasedMailSenderFactory;
 import com.encircle360.oss.straightmail.tenant.mail.TenantMailSenderFactory;
 import com.encircle360.oss.straightmail.util.HtmlUtil;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import freemarker.template.TemplateException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.util.ByteArrayDataSource;

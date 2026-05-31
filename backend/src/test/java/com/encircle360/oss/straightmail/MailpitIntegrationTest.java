@@ -1,8 +1,8 @@
 package com.encircle360.oss.straightmail;
 
 import com.encircle360.oss.straightmail.dto.email.EmailInlineTemplateRequestDTO;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpMethod;
@@ -41,7 +41,7 @@ class MailpitIntegrationTest extends AbstractTest {
         String emailBody = "Hello, this is a test email with value: ${testValue}";
 
         HashMap<String, JsonNode> model = new HashMap<>();
-        model.put("testValue", JsonNodeFactory.instance.textNode("Integration Test Value"));
+        model.put("testValue", JsonNodeFactory.instance.stringNode("Integration Test Value"));
 
         EmailInlineTemplateRequestDTO emailRequest = EmailInlineTemplateRequestDTO.builder()
                 .recipients(List.of(recipient))
@@ -75,19 +75,19 @@ class MailpitIntegrationTest extends AbstractTest {
         boolean emailFound = false;
         for (JsonNode message : messages) {
             JsonNode subjectNode = message.get("Subject");
-            if (subjectNode != null && subject.equals(subjectNode.asText())) {
+            if (subjectNode != null && subject.equals(subjectNode.asString())) {
                 emailFound = true;
 
                 // Verify recipient
                 JsonNode toArray = message.get("To");
                 assertNotNull(toArray);
                 assertTrue(toArray.isArray());
-                assertTrue(toArray.get(0).get("Address").asText().contains(recipient));
+                assertTrue(toArray.get(0).get("Address").asString().contains(recipient));
 
                 // Verify sender
                 JsonNode fromNode = message.get("From");
                 assertNotNull(fromNode);
-                assertTrue(fromNode.get("Address").asText().contains(sender));
+                assertTrue(fromNode.get("Address").asString().contains(sender));
 
                 break;
             }
@@ -141,7 +141,7 @@ class MailpitIntegrationTest extends AbstractTest {
     void shouldClearMailpitMessages() throws Exception {
         // Arrange — send an email first
         HashMap<String, JsonNode> model = new HashMap<>();
-        model.put("test", JsonNodeFactory.instance.textNode("value"));
+        model.put("test", JsonNodeFactory.instance.stringNode("value"));
 
         EmailInlineTemplateRequestDTO emailRequest = EmailInlineTemplateRequestDTO.builder()
                 .recipients(List.of("test@test.com"))

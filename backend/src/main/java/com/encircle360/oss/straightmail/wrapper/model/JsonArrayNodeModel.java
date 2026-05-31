@@ -1,13 +1,13 @@
 package com.encircle360.oss.straightmail.wrapper.model;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ArrayNode;
 import freemarker.ext.beans.BeanModel;
 import freemarker.ext.beans.BeansWrapper;
 import freemarker.ext.util.ModelFactory;
 import freemarker.template.*;
 
 /**
- * FreeMarker template model for Jackson {@link com.fasterxml.jackson.databind.node.ArrayNode}.
+ * FreeMarker template model for Jackson {@link tools.jackson.databind.node.ArrayNode}.
  *
  * <p>Implements both {@link TemplateSequenceModel} (index-based access) and
  * {@link TemplateCollectionModel} (iteration) so that FreeMarker templates can

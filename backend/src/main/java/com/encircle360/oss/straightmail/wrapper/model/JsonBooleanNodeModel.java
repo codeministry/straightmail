@@ -1,13 +1,13 @@
 package com.encircle360.oss.straightmail.wrapper.model;
 
-import com.fasterxml.jackson.databind.node.BooleanNode;
+import tools.jackson.databind.node.BooleanNode;
 import freemarker.ext.beans.BeanModel;
 import freemarker.ext.beans.BeansWrapper;
 import freemarker.ext.util.ModelFactory;
 import freemarker.template.TemplateBooleanModel;
 
 /**
- * FreeMarker template model for Jackson {@link com.fasterxml.jackson.databind.node.BooleanNode}.
+ * FreeMarker template model for Jackson {@link tools.jackson.databind.node.BooleanNode}.
  * Exposes the node's boolean value via {@link TemplateBooleanModel#getAsBoolean()}.
  */
 public class JsonBooleanNodeModel extends BeanModel implements TemplateBooleanModel {
