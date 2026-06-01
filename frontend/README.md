@@ -8,41 +8,38 @@
 
 A modern, open-source Angular administration console for managing email templates, rendering, and sending operations with the StraightMail email service.
 
-<img src="docs/files/1%20dashboard.png" alt="Dashboard" width="800">
+<img src="docs/files/dashboard.png" alt="Dashboard" width="800">
 
 <table width="800">
   <tr>
     <td valign="top" width="25%" align="center">
-      <img src="docs/files/2%20templates.png" alt="Edit Template" width="190">
+      <img src="docs/files/templates.png" alt="Templates" width="190">
+      <br><sub>Templates</sub>
+    </td>
+    <td valign="top" width="25%" align="center">
+      <img src="docs/files/edit%20template.png" alt="Edit Template" width="190">
       <br><sub>Edit Template</sub>
     </td>
     <td valign="top" width="25%" align="center">
-      <img src="docs/files/3%20edit%20template.png" alt="Edit Template" width="190">
-      <br><sub>Edit Template</sub>
-    </td>
-    <td valign="top" width="25%" align="center">
-      <img src="docs/files/4%20render%20preview%20html.png" alt="Render Preview HTML" width="190">
+      <img src="docs/files/render%20preview%20html.png" alt="Render Preview HTML" width="190">
       <br><sub>Render Preview</sub>
     </td>
     <td valign="top" width="25%" rowspan="2" align="center" valign="top">
-      <img src="docs/files/9%20mobile.png" alt="Mobile View" width="100">
+      <img src="docs/files/mobile.png" alt="Mobile View" width="100">
       <br><sub>Mobile View</sub>
-      <br><br>
-      <img src="docs/files/10%20mobile%20nav.png" alt="Mobile Navigation" width="100">
-      <br><sub>Mobile Navigation</sub>
     </td>
   </tr>
   <tr>
     <td valign="top" width="25%" align="center">
-      <img src="docs/files/6%20send%20mail%20template.png" alt="Send Mail Template" width="190">
+      <img src="docs/files/send%20mail%20template.png" alt="Send Mail Template" width="190">
       <br><sub>Send Mail</sub>
     </td>
     <td valign="top" width="25%" align="center">
-      <img src="docs/files/8%20Help.png" alt="Help Panel" width="190">
+      <img src="docs/files/help.png" alt="Help Panel" width="190">
       <br><sub>Help Panel</sub>
     </td>
     <td valign="top" width="25%" align="center">
-      <img src="docs/files/7%20mail.png" alt="Mail Output" width="190">
+      <img src="docs/files/mail.png" alt="Mail Output" width="190">
       <br><sub>Mail Output</sub>
     </td>
   </tr>
