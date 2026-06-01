@@ -66,6 +66,136 @@ straightmail/
 
 ## Getting Started
 
+### Migrating from 0.4.0
+
+If you're upgrading straightmail from an older version, check this guide first:
+
+<details>
+<summary><strong>Migration Guide</strong></summary>
+
+### What changed
+
+| | 0.4.0 | 0.5.0                                                        |
+|---|---|--------------------------------------------------------------|
+| `ENCRYPTION_KEY` | not required | **required** — `openssl rand -base64 32`                     |
+| Auth modes | OIDC only | OIDC (default), `api-key`, `none`                            |
+| Admin UI | separate build required | bundled in backend image (only Monorepo), served at `:50003` |
+| Test mail server | MailHog (`mailhog/mailhog`) | **Mailpit** (`axllent/mailpit`)                              |
+| Database | required (PostgreSQL) | optional — API-only mode needs no database                   |
+
+Your existing `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_ENABLE_TLS`,
+`SMTP_ENABLE_SSL`, and `DEFAULT_SENDER` values carry over unchanged.
+
+---
+
+### Without Admin UI — API-only (minimal)
+
+Add `ENCRYPTION_KEY` and `AUTH_MODE: none` to your existing setup. Everything else stays the same.
+
+```yaml
+services:
+  straightmail:
+    image: ghcr.io/encircle360-oss/straightmail:0.5.0
+    ports:
+      - "50003:50003"
+    environment:
+      ENCRYPTION_KEY: "<openssl rand -base64 32>"   # new — required
+      AUTH_MODE: none                                 # new — open access
+      SMTP_HOST: <your-mail-server>
+      SMTP_PORT: <port>
+      SMTP_USER: <username>
+      SMTP_PASSWORD: <password>
+      DEFAULT_SENDER: <noreply@example.com>
+      SMTP_ENABLE_TLS: "true"
+      SMTP_ENABLE_SSL: "false"
+```
+
+---
+
+### With Admin UI
+
+The Admin UI is now bundled in the backend image and served at `http://localhost:50003`.
+Activate the `database` Spring profile to enable template CRUD and tenant management.
+
+**Option A — API-Key auth (recommended for quick migration)**
+
+```yaml
+services:
+  straightmail:
+    image: ghcr.io/encircle360-oss/straightmail:0.5.0
+    ports:
+      - "50003:50003"
+    volumes:
+      - ./data:/data
+    environment:
+      SPRING_PROFILES_ACTIVE: database
+      AUTH_MODE: api-key
+      API_KEY: "<your-secure-api-key>"
+      ENCRYPTION_KEY: "<openssl rand -base64 32>"
+      DB_URL: "jdbc:sqlite:/data/straightmail.db?journal_mode=WAL"
+      SMTP_HOST: <your-mail-server>
+      SMTP_PORT: <port>
+      SMTP_USER: <username>
+      SMTP_PASSWORD: <password>
+      DEFAULT_SENDER: <noreply@example.com>
+      SMTP_ENABLE_TLS: "true"
+      SMTP_ENABLE_SSL: "false"
+```
+
+Access the UI at `http://localhost:50003`. Send API requests with `X-API-KEY: <your-secure-api-key>`.
+
+**Option B — OIDC auth (production)**
+
+```yaml
+services:
+  straightmail:
+    image: ghcr.io/encircle360-oss/straightmail:0.5.0
+    ports:
+      - "50003:50003"
+    volumes:
+      - ./data:/data
+    environment:
+      SPRING_PROFILES_ACTIVE: database
+      AUTH_MODE: oidc
+      OIDC_ISSUER_URI: https://<your-keycloak>/realms/<realm>
+      ENCRYPTION_KEY: "<openssl rand -base64 32>"
+      DB_URL: "jdbc:sqlite:/data/straightmail.db?journal_mode=WAL"
+      SMTP_HOST: <your-mail-server>
+      SMTP_PORT: <port>
+      SMTP_USER: <username>
+      SMTP_PASSWORD: <password>
+      DEFAULT_SENDER: <noreply@example.com>
+      SMTP_ENABLE_TLS: "true"
+      SMTP_ENABLE_SSL: "false"
+```
+
+For a production PostgreSQL setup, see [`docker/oidc-postgres.yml`](docker/oidc-postgres.yml).
+
+---
+
+### Migrating template and i18n files
+
+In 0.4.0, templates and translations were typically baked into a custom image:
+
+```dockerfile
+FROM ghcr.io/encircle360-oss/straightmail:0.4.0
+ADD templates /resources/templates
+ADD i18n /resources/i18n
+```
+
+In 0.5.0, mount your local directories instead — no custom image needed:
+
+```yaml
+    volumes:
+      - ./templates:/resources/templates   # FreeMarker templates
+      - ./i18n:/resources/i18n             # translation bundles
+```
+
+Add these `volumes` entries to whichever Compose snippet you use above. Your template and i18n files work unchanged.
+
+</details>
+
+
 ### Local Development
 
 **One-time setup — backend local config:**
