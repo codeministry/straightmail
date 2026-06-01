@@ -3,12 +3,13 @@
 [![Monorepo Full Build](https://github.com/encircle360-oss/straightmail/actions/workflows/monorepo.yml/badge.svg)](https://github.com/encircle360-oss/straightmail/actions/workflows/monorepo.yml)
 [![Backend Build](https://github.com/encircle360-oss/straightmail/actions/workflows/backend.yml/badge.svg)](https://github.com/encircle360-oss/straightmail/actions/workflows/backend.yml)
 [![Frontend Build](https://github.com/encircle360-oss/straightmail/actions/workflows/frontend.yml/badge.svg)](https://github.com/encircle360-oss/straightmail/actions/workflows/frontend.yml)
+[![Container](https://img.shields.io/badge/ghcr.io-encircle360--oss%2Fstraightmail-blue?logo=docker)](https://github.com/encircle360-oss/straightmail/pkgs/container/straightmail)
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Java 21](https://img.shields.io/badge/Java-21-orange?logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Angular](https://img.shields.io/badge/Angular-21.2-DD0031?logo=angular&logoColor=white)](https://angular.io)
-[![Matrix](https://img.shields.io/badge/Matrix-Join%20Chat-blue?logo=matrix&logoColor=white)](https://matrix.to/#/#oss:encircle360.com)
+[![Matrix](https://img.shields.io/badge/Matrix-Join%20Chat-0dbd8b?logo=matrix&logoColor=white)](https://matrix.to/#/#oss:encircle360.com)
 
 **straightmail** is a mail sending API with template and i18n support, combined with a modern Angular administration
 console for managing email templates, rendering, and sending operations.
