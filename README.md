@@ -389,4 +389,4 @@ When running with the `database` profile, straightmail is fully multi-tenant:
 
 Join our community for support, discussions, and updates regarding our open-source projects.
 
-[![Matrix](https://img.shields.io/badge/Matrix-Join%20Chat-blue?logo=matrix&logoColor=white)](https://matrix.to/#/#oss:encircle360.com)
+[![Matrix](https://img.shields.io/badge/Matrix-Join%20Chat-0dbd8b?logo=matrix&logoColor=white)](https://matrix.to/#/#oss:encircle360.com)
