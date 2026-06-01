@@ -273,6 +273,20 @@ Skip the Angular build (backend-only):
 SKIP_FRONTEND_BUILD=true ./gradlew build
 ```
 
+## CI / CD
+
+Five GitHub Actions workflows automate builds, tests, and releases across the monorepo.
+
+| Workflow | Trigger | Purpose |
+|---|---|---|
+| Feature CI | push to `feature/**`, `fix/**`, `chore/**` | Build + test both components before a PR |
+| Backend CI | push / PR to `main` (`backend/**`) | Build, test, publish backend image |
+| Frontend CI | push / PR to `main` (`frontend/**`) | Unit tests + Playwright E2E |
+| Monorepo CI | push to `main` | Full build + combined image to `ghcr.io` |
+| Release | push to `master` or `v*.*.*` tag | Production image with SBOM & provenance attestations |
+
+See [`.github/workflows/README.md`](.github/workflows/README.md) for trigger details, job breakdown, and required permissions.
+
 ## Template Sources
 
 straightmail supports three independent template sources that can be combined:
