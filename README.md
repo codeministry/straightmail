@@ -68,7 +68,7 @@ straightmail/
 
 ### Migrating from 0.4.0
 
-If you're upgrading straightmail from an older version, check this guide first:
+If you're upgrading straightmail from an older version, check this migration guide first:
 
 <details>
 <summary><strong>Migration Guide</strong></summary>
@@ -128,11 +128,9 @@ services:
     volumes:
       - ./data:/data
     environment:
-      SPRING_PROFILES_ACTIVE: database
       AUTH_MODE: api-key
       API_KEY: "<your-secure-api-key>"
       ENCRYPTION_KEY: "<openssl rand -base64 32>"
-      DB_URL: "jdbc:sqlite:/data/straightmail.db?journal_mode=WAL"
       SMTP_HOST: <your-mail-server>
       SMTP_PORT: <port>
       SMTP_USER: <username>
@@ -155,11 +153,9 @@ services:
     volumes:
       - ./data:/data
     environment:
-      SPRING_PROFILES_ACTIVE: database
       AUTH_MODE: oidc
       OIDC_ISSUER_URI: https://<your-keycloak>/realms/<realm>
       ENCRYPTION_KEY: "<openssl rand -base64 32>"
-      DB_URL: "jdbc:sqlite:/data/straightmail.db?journal_mode=WAL"
       SMTP_HOST: <your-mail-server>
       SMTP_PORT: <port>
       SMTP_USER: <username>
@@ -168,6 +164,8 @@ services:
       SMTP_ENABLE_TLS: "true"
       SMTP_ENABLE_SSL: "false"
 ```
+
+For a production SQLite setup, see [`docker/oidc-sqlite.yml`](docker/oidc-sqlite.yml).
 
 For a production PostgreSQL setup, see [`docker/oidc-postgres.yml`](docker/oidc-postgres.yml).
 
