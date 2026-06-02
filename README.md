@@ -75,13 +75,15 @@ If you're upgrading straightmail from an older version, check this migration gui
 
 ### What changed
 
-| | 0.4.0 | 0.5.0                                                        |
-|---|---|--------------------------------------------------------------|
-| `ENCRYPTION_KEY` | not required | **required** — `openssl rand -base64 32`                     |
-| Auth modes | OIDC only | OIDC (default), `api-key`, `none`                            |
-| Admin UI | separate build required | bundled in backend image (only Monorepo), served at `:50003` |
-| Test mail server | MailHog (`mailhog/mailhog`) | **Mailpit** (`axllent/mailpit`)                              |
-| Database | required (PostgreSQL) | optional — API-only mode needs no database                   |
+|                  | 0.4.0                                   | 0.5.0                                                              |
+|------------------|-----------------------------------------|--------------------------------------------------------------------|
+| `ENCRYPTION_KEY` | not required                            | **required** — `openssl rand -base64 32`                           |
+| Auth modes       | not implemented                         | OIDC (default), `api-key`, `none`                                  |
+| Admin UI         | separate build required                 | bundled in backend image (only Monorepo), served at `:50003`       |
+| Test mail server | MailHog (`mailhog/mailhog`)             | **Mailpit** (`axllent/mailpit`)                                    |
+| Database         | not implemented                         | optional — API-only mode needs no database                         |
+| File templates   | mount volume or baked into custom image | mount volume + `TEMPLATES_FILE_BASE_PATH: /templates`              |
+| Tenant config    | implicit (single tenant)                | declare via `tenants.config` (required without `database` profile) |
 
 Your existing `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_ENABLE_TLS`,
 `SMTP_ENABLE_SSL`, and `DEFAULT_SENDER` values carry over unchanged.
@@ -90,7 +92,10 @@ Your existing `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_ENAB
 
 ### Without Admin UI — API-only (minimal)
 
-Add `ENCRYPTION_KEY` and `AUTH_MODE: none` to your existing setup. Everything else stays the same.
+> **Required:** You must declare at least one tenant. Add `TENANTS_CONFIG_0_ID` and `TENANTS_CONFIG_0_DISPLAY_NAME`
+> — without a tenant entry, requests will fail at tenant resolution.
+
+Add `ENCRYPTION_KEY`, `AUTH_MODE: none`, and the tenant identity to your existing setup.
 
 ```yaml
 services:
@@ -101,6 +106,8 @@ services:
     environment:
       ENCRYPTION_KEY: "<openssl rand -base64 32>"   # new — required
       AUTH_MODE: none                                 # new — open access
+      TENANTS_CONFIG_0_ID: default                    # new — required
+      TENANTS_CONFIG_0_DISPLAY_NAME: Default          # new — required
       SMTP_HOST: <your-mail-server>
       SMTP_PORT: <port>
       SMTP_USER: <username>
@@ -131,6 +138,8 @@ services:
       AUTH_MODE: api-key
       API_KEY: "<your-secure-api-key>"
       ENCRYPTION_KEY: "<openssl rand -base64 32>"
+      TENANTS_CONFIG_0_ID: default
+      TENANTS_CONFIG_0_DISPLAY_NAME: Default
       SMTP_HOST: <your-mail-server>
       SMTP_PORT: <port>
       SMTP_USER: <username>
@@ -156,6 +165,8 @@ services:
       AUTH_MODE: oidc
       OIDC_ISSUER_URI: https://<your-keycloak>/realms/<realm>
       ENCRYPTION_KEY: "<openssl rand -base64 32>"
+      TENANTS_CONFIG_0_ID: default
+      TENANTS_CONFIG_0_DISPLAY_NAME: Default
       SMTP_HOST: <your-mail-server>
       SMTP_PORT: <port>
       SMTP_USER: <username>
@@ -177,7 +188,7 @@ In 0.4.0, templates and translations were typically baked into a custom image:
 
 ```dockerfile
 FROM ghcr.io/encircle360-oss/straightmail:0.4.0
-ADD templates /resources/templates
+ADD backend/templates /resources/templates
 ADD i18n /resources/i18n
 ```
 
@@ -185,14 +196,59 @@ In 0.5.0, mount your local directories instead — no custom image needed:
 
 ```yaml
     volumes:
-      - ./templates:/resources/templates   # FreeMarker templates
+      - ./templates:/templates             # FreeMarker templates
       - ./i18n:/resources/i18n             # translation bundles
+    environment:
+      TEMPLATES_FILE_BASE_PATH: /templates
 ```
 
-Add these `volumes` entries to whichever Compose snippet you use above. Your template and i18n files work unchanged.
+Add these `volumes` and `environment` entries to whichever Compose snippet you use above.
+
+**⚠️ Breaking change — tenant subdirectory required:** In 0.5.0, templates must live inside a subdirectory
+named after the tenant ID. Move your existing template files into a `{tenantId}/` folder before mounting:
+
+```
+templates/
+└── default/
+    ├── welcome.ftl
+    ├── welcome_subject.ftl
+    └── welcome_plain.ftl
+```
+
+The subdirectory name must match your tenant ID (e.g. `default` for `TENANTS_CONFIG_0_ID: default`).
+Subdirectories within the tenant folder are supported — `default/emails/welcome.ftl` gets the template ID `emails/welcome`.
+
+---
+
+### Configuring tenants
+
+Without the `database` profile, tenant existence is validated against `tenants.config` — a list of
+statically declared tenants provisioned at startup. You must declare at least the `default` tenant.
+
+**YAML form** (e.g. mounted `application.yml`):
+
+```yaml
+tenants:
+  config:
+    - id: default
+      displayName: Default
+```
+
+**Env var form** (Docker Compose `environment:`):
+
+```yaml
+environment:
+  TENANTS_CONFIG_0_ID: default
+  TENANTS_CONFIG_0_DISPLAY_NAME: Default
+```
+
+SMTP credentials are set globally via `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`,
+`DEFAULT_SENDER`, `SMTP_ENABLE_TLS`, and `SMTP_ENABLE_SSL` — they apply to all tenants.
+
+> With the `database` profile active, `TenantReconciliationService` provisions the `default` tenant
+> automatically — `tenants.config` is then optional and only needed to pre-provision additional tenants.
 
 </details>
-
 
 ### Local Development
 
@@ -277,15 +333,16 @@ SKIP_FRONTEND_BUILD=true ./gradlew build
 
 Five GitHub Actions workflows automate builds, tests, and releases across the monorepo.
 
-| Workflow | Trigger | Purpose |
-|---|---|---|
-| Feature CI | push to `feature/**`, `fix/**`, `chore/**` | Build + test both components before a PR |
-| Backend CI | push / PR to `main` (`backend/**`) | Build, test, publish backend image |
-| Frontend CI | push / PR to `main` (`frontend/**`) | Unit tests + Playwright E2E |
-| Monorepo CI | push to `main` | Full build + combined image to `ghcr.io` |
-| Release | push to `master` or `v*.*.*` tag | Production image with SBOM & provenance attestations |
+| Workflow    | Trigger                                    | Purpose                                              |
+|-------------|--------------------------------------------|------------------------------------------------------|
+| Feature CI  | push to `feature/**`, `fix/**`, `chore/**` | Build + test both components before a PR             |
+| Backend CI  | push / PR to `main` (`backend/**`)         | Build, test, publish backend image                   |
+| Frontend CI | push / PR to `main` (`frontend/**`)        | Unit tests + Playwright E2E                          |
+| Monorepo CI | push to `main`                             | Full build + combined image to `ghcr.io`             |
+| Release     | push to `master` or `v*.*.*` tag           | Production image with SBOM & provenance attestations |
 
-See [`.github/workflows/README.md`](.github/workflows/README.md) for trigger details, job breakdown, and required permissions.
+See [`.github/workflows/README.md`](.github/workflows/README.md) for trigger details, job breakdown, and required
+permissions.
 
 ## Template Sources
 
@@ -336,11 +393,11 @@ Both sources are enabled in all Docker Compose variants. To disable one, set the
 
 straightmail supports two authentication modes configured at startup:
 
-| Mode       | `AUTH_MODE` value  | Description                                                                                                                                              |
-|------------|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| OIDC / JWT | `oidc` (default)   | JWT from an OIDC provider (e.g. Keycloak). Roles are derived from `realm_access.roles` → `ROLE_*`. The tenant is resolved from a configurable JWT claim. |
-| API-Key    | `api-key`          | `X-API-KEY` request header carrying a global or per-tenant SHA-256 hash. The tenant is determined by a key lookup in the database.                       |
-| None       | `none`             | All endpoints are open. Suitable for internal services with network-level protection.                                                                     |
+| Mode       | `AUTH_MODE` value | Description                                                                                                                                              |
+|------------|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| OIDC / JWT | `oidc` (default)  | JWT from an OIDC provider (e.g. Keycloak). Roles are derived from `realm_access.roles` → `ROLE_*`. The tenant is resolved from a configurable JWT claim. |
+| API-Key    | `api-key`         | `X-API-KEY` request header carrying a global or per-tenant SHA-256 hash. The tenant is determined by a key lookup in the database.                       |
+| None       | `none`            | All endpoints are open. Suitable for internal services with network-level protection.                                                                    |
 
 Key environment variables:
 

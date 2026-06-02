@@ -2,8 +2,8 @@
 # Mode: Minimal — No auth, no database, file templates
 # =============================================================================
 # Auth:      none (all API endpoints are open — AUTH_MODE=none)
-# Templates: file-based (../templates/ mounted at /resources/templates)
-#            git-sync enabled (no-op without tenants — no DB in this mode)
+# Templates: file-based (./data/files mounted at /templates; templates must be in a {tenantId}/ subdir,
+#            e.g. data/files/default/welcome.ftl); git-sync enabled (no-op without DB)
 # Database:  none (no JPA, no tenant filters)
 # Services:  backend + mailpit
 #
@@ -48,15 +48,15 @@ services:
       # -----------------------------------------------------------------------
       TEMPLATE_FILE_ENABLED: "true"
       TEMPLATE_GIT_SYNC_ENABLED: "true"
+      TEMPLATES_FILE_BASE_PATH: /resources/templates
+      TENANTS_CONFIG_0_ID: "default"
+      TENANTS_CONFIG_0_DISPLAY_NAME: "ACME"
     volumes:
       - ./data/sqlite:/data
       - ./data/files:/resources/templates
     ports:
       - "50003:50003"
       - "50004:50004"
-    depends_on:
-      mailpit:
-        condition: service_healthy
     networks:
       - straightmail
 

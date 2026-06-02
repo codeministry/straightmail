@@ -138,11 +138,6 @@ services:
     ports:
       - "50003:50003"
       - "50004:50004"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      mailpit:
-        condition: service_healthy
     networks:
       - straightmail
 

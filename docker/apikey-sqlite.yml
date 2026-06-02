@@ -77,9 +77,6 @@ services:
     ports:
       - "50003:50003"
       - "50004:50004"
-    depends_on:
-      mailpit:
-        condition: service_healthy
     networks:
       - straightmail
 
