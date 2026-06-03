@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -99,12 +100,14 @@ public class EmailService {
         HashMap<String, JsonNode> model = emailRequest.getModel();
         String templateId = null;
         String templateName = null;
+        String templateSource = "unknown";
 
         String plainTextTemplate = null;
         String bodyTemplate = null;
         String subjectTemplate = null;
 
         if (emailRequest instanceof EmailTemplateFileRequestDTO emailTemplateFileRequest) {
+            templateSource = "file";
             templateId = emailTemplateFileRequest.getEmailTemplateId();
             Template template = this.resolveTemplate(templateId);
             if (template == null) {
@@ -115,10 +118,19 @@ public class EmailService {
             bodyTemplate = template.getHtml();
             plainTextTemplate = template.getPlain();
         } else if (emailRequest instanceof EmailInlineTemplateRequestDTO inlineTemplateRequest) {
+            templateSource = "inline";
             subjectTemplate = inlineTemplateRequest.getSubject();
             bodyTemplate = inlineTemplateRequest.getEmailTemplate();
             plainTextTemplate = inlineTemplateRequest.getPlainText();
         }
+
+        // Operator visibility: request shape only — no recipient values, no rendered content.
+        // Recipient addresses and rendered template bodies can carry personal data.
+        log.info("Mail request received: source={}, templateId={}, recipients={}, cc={}, bcc={}, attachments={}, locale={}",
+                templateSource, templateId,
+                size(emailRequest.getRecipients()), size(emailRequest.getCc()),
+                size(emailRequest.getBcc()), size(emailRequest.getAttachments()),
+                locale);
 
         String[] rendered = this.renderTemplates(subjectTemplate, bodyTemplate, plainTextTemplate, locale, model);
 
@@ -127,7 +139,7 @@ public class EmailService {
         String plainText = rendered[2];
 
         if (subject == null || body == null) {
-            log.error("Couldn't render template. Subject: {}, Body: {}", subject, body);
+            log.error("Couldn't render template (templateId={}): subject={} body={}", templateId, subject != null, body != null);
             return this.result("Error while rendering template");
         }
 
@@ -148,6 +160,9 @@ public class EmailService {
         }
 
         sender.send(message);
+
+        log.info("Mail dispatched to SMTP: source={}, templateId={}, recipients={}",
+                templateSource, templateId, size(emailRequest.getRecipients()));
 
         RenderedTemplateDTO renderedTemplateDTO = null;
         if (emailRequest.isVerbose()) {
@@ -309,6 +324,10 @@ public class EmailService {
         }
 
         return message;
+    }
+
+    private static int size(Collection<?> values) {
+        return values == null ? 0 : values.size();
     }
 
     private EmailResultDTO result(String message) {

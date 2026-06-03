@@ -23,22 +23,41 @@ import java.nio.file.Paths;
 public abstract class AbstractTemplateLoader implements TemplateLoader {
 
     /**
-     * Reads the content of a template file, first from the classpath, then from the filesystem.
+     * Reads a template file that must exist. Logs ERROR when the file cannot be
+     * resolved because the missing file will break the surrounding render/send call.
      *
-     * <p>Classpath lookup: {@code classpath:templates/<path>}.<br>
-     * Filesystem fallback: {@code /resources/templates/<path>}.
-     *
-     * @param path the relative path within the templates directory (e.g. {@code "welcome.ftl"})
-     * @return the file content as a string, or {@code null} if the file is not found in either location
+     * @param path template path relative to the {@code templates/} root (e.g. {@code "welcome.ftl"})
+     * @return file content, or {@code null} if the file is missing
      */
-    protected String getFileContent(String path) {
+    protected String getRequiredFileContent(String path) {
+        String content = readTemplateFile(path);
+        if (content == null) {
+            log.error("Couldn't find required template {} in classpath or filesystem.", path);
+        }
+        return content;
+    }
+
+    /**
+     * Reads an optional template file. Missing files are not logged because the
+     * caller is expected to have a fallback (e.g. deriving plain text from HTML).
+     * I/O errors while reading an existing file are still logged at ERROR.
+     *
+     * @param path template path relative to the {@code templates/} root
+     * @return file content, or {@code null} if the file does not exist
+     */
+    protected String getOptionalFileContent(String path) {
+        return readTemplateFile(path);
+    }
+
+    private String readTemplateFile(String path) {
         String fullClassPath = "templates/" + path;
         Resource resource = new ClassPathResource(fullClassPath);
         if (resource.exists()) {
             try {
                 return new String(resource.getInputStream().readAllBytes());
             } catch (IOException e) {
-                log.error("Error while getting file content from classpath {}.", fullClassPath, e);
+                log.error("Error while reading template {} from classpath.", fullClassPath, e);
+                return null;
             }
         }
 
@@ -48,11 +67,11 @@ public abstract class AbstractTemplateLoader implements TemplateLoader {
             try {
                 return Files.readString(filePath);
             } catch (Exception e) {
-                log.error("Error while getting file content {} from filesystem.", fullFsPath, e);
+                log.error("Error while reading template {} from filesystem.", fullFsPath, e);
+                return null;
             }
         }
 
-        log.error("Couldn't find template {} in classpath or filesystem.", path);
         return null;
     }
 
@@ -60,9 +79,9 @@ public abstract class AbstractTemplateLoader implements TemplateLoader {
      * Builds a {@link com.encircle360.oss.straightmail.model.Template} by reading the three
      * conventional files for the given template ID:
      * <ul>
-     *   <li>{@code <templateId>.ftl} — HTML body</li>
-     *   <li>{@code <templateId>_subject.ftl} — subject line</li>
-     *   <li>{@code <templateId>_plain.ftl} — plain-text body</li>
+     *   <li>{@code <templateId>.ftl} — HTML body (required)</li>
+     *   <li>{@code <templateId>_subject.ftl} — subject line (required)</li>
+     *   <li>{@code <templateId>_plain.ftl} — plain-text body (optional)</li>
      * </ul>
      *
      * @param templateId the template identifier (without suffix)
@@ -74,11 +93,14 @@ public abstract class AbstractTemplateLoader implements TemplateLoader {
         String subjectTemplatePath = templateId + "_subject.ftl";
         String plainTemplatePath = templateId + "_plain.ftl";
 
+        // The HTML body and the subject line are required to build a valid mail;
+        // the plain-text body is optional because EmailService derives one from
+        // the rendered HTML when no dedicated template is present.
         return Template.builder()
                 .name(templateId)
-                .subject(this.getFileContent(subjectTemplatePath))
-                .plain(this.getFileContent(plainTemplatePath))
-                .html(this.getFileContent(baseTemplatePath))
+                .subject(getRequiredFileContent(subjectTemplatePath))
+                .plain(getOptionalFileContent(plainTemplatePath))
+                .html(getRequiredFileContent(baseTemplatePath))
                 .build();
     }
 }
