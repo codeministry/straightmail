@@ -45,7 +45,7 @@ services:
       AUTH_MODE: api-key
       API_KEY: "dev-api-key-change-me"
       # Stable dev encryption key — change for any non-local environment
-      ENCRYPTION_KEY: "CHANGE_ME_GENERATE_RANDOM_KEY"
+      ENCRYPTION_KEY: "bVsu6U/TNLrOyWN25si6/ZiyRxbgvBBfhTPebiyFuMY="   # local development only — generate your own with: openssl rand -base64 32
       DB_URL: "jdbc:sqlite:/data/straightmail.db?journal_mode=WAL"
       SMTP_HOST: mailpit
       SMTP_PORT: 1025

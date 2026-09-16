@@ -343,3 +343,36 @@ databaseChangeLog:
               WHERE tenant_slug IN (
                 SELECT slug FROM tenants WHERE git_repo_url IS NULL OR git_repo_url = ''
               );
+
+  - changeSet:
+      id: 0009-boolean-tenant-flags-postgresql
+      author: straightmail
+      comment: >
+        smtp_tls, smtp_ssl and active were created as integer in 0002. SQLite stores booleans
+        as integers, so that worked there, but PostgreSQL rejects a boolean bind against an
+        integer column and the first tenant insert from TenantReconciliationService failed at
+        startup. Converting in a separate changeset rather than editing 0002 keeps the
+        checksums of existing installations intact.
+      preConditions:
+        - onFail: MARK_RAN
+        - dbms:
+            type: postgresql
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE tenants
+                ALTER COLUMN smtp_tls DROP DEFAULT,
+                ALTER COLUMN smtp_ssl DROP DEFAULT,
+                ALTER COLUMN active DROP DEFAULT;
+        - sql:
+            sql: >
+              ALTER TABLE tenants
+                ALTER COLUMN smtp_tls TYPE boolean USING smtp_tls <> 0,
+                ALTER COLUMN smtp_ssl TYPE boolean USING smtp_ssl <> 0,
+                ALTER COLUMN active TYPE boolean USING active <> 0;
+        - sql:
+            sql: >
+              ALTER TABLE tenants
+                ALTER COLUMN smtp_tls SET DEFAULT false,
+                ALTER COLUMN smtp_ssl SET DEFAULT false,
+                ALTER COLUMN active SET DEFAULT true;

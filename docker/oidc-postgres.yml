@@ -102,7 +102,7 @@ services:
       OIDC_JWK_URI: "http://keycloak:8080/realms/straightmail/protocol/openid-connect/certs"
       JWT_TENANT_IDS_CLAIM: "tenant_ids"
       # Stable dev encryption key — change for any non-local environment
-      ENCRYPTION_KEY: "CHANGE_ME_GENERATE_RANDOM_KEY"
+      ENCRYPTION_KEY: "FPaPpdR8uAwH8OTCitG/cYd12vWAnDS4GntOsu83xcs="   # local development only — generate your own with: openssl rand -base64 32
       # PostgreSQL connection
       DB_URL: "jdbc:postgresql://postgres:5432/straightmail"
       DB_DRIVER: "org.postgresql.Driver"
