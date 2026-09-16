@@ -120,14 +120,16 @@ public class FileTemplateSourceProvider implements TemplateSourceProvider {
     }
 
     private Template buildTemplate(String tenantId, String name, Path tenantDir) {
-        Path htmlPath = tenantDir.resolve(name + ".ftl");
-        if (!Files.exists(htmlPath)) {
+        Path base = tenantDir.toAbsolutePath().normalize();
+
+        Path htmlPath = this.resolveWithin(base, name + ".ftl");
+        if (htmlPath == null || !Files.exists(htmlPath)) {
             return null;
         }
 
         String html = this.readFile(htmlPath);
-        String subject = this.readFile(tenantDir.resolve(name + "_subject.ftl"));
-        String plain = this.readFile(tenantDir.resolve(name + "_plain.ftl"));
+        String subject = this.readFile(this.resolveWithin(base, name + "_subject.ftl"));
+        String plain = this.readFile(this.resolveWithin(base, name + "_plain.ftl"));
 
         return Template.builder()
                 .name(name)
@@ -138,8 +140,27 @@ public class FileTemplateSourceProvider implements TemplateSourceProvider {
                 .build();
     }
 
+    /**
+     * Resolves {@code relative} against {@code base} and confines the result to that directory.
+     *
+     * <p>Template names reach this provider from caller-supplied input (the {@code ::}-encoded
+     * template id on the read, render and send endpoints). Without confinement a name containing
+     * {@code ..} escapes the tenant directory and reads another tenant's templates, so a name that
+     * does not stay under {@code base} resolves to {@code null} rather than to a file. An absolute
+     * name is rejected by the same check, because {@link Path#resolve} would otherwise discard the
+     * base entirely.
+     *
+     * @param base     the tenant directory, already absolute and normalised
+     * @param relative the file name to resolve, may contain path separators
+     * @return the confined path, or {@code null} if it would leave {@code base}
+     */
+    private Path resolveWithin(Path base, String relative) {
+        Path candidate = base.resolve(relative).normalize();
+        return candidate.startsWith(base) ? candidate : null;
+    }
+
     private String readFile(Path path) {
-        if (!Files.exists(path)) {
+        if (path == null || !Files.exists(path)) {
             return null;
         }
         try {

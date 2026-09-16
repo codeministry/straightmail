@@ -1,7 +1,6 @@
 package com.encircle360.oss.straightmail.service;
 
 import com.encircle360.oss.straightmail.util.FakeLocaleHttpServletRequest;
-import com.encircle360.oss.straightmail.wrapper.JsonNodeObjectWrapper;
 import tools.jackson.databind.JsonNode;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -35,7 +34,11 @@ import java.util.Map;
  * enabled by injecting a {@code springMacroRequestContext} built from a synthetic
  * {@link FakeLocaleHttpServletRequest} using the requested locale.
  *
- * <p>JSON model data is made available to templates through a custom {@link JsonNodeObjectWrapper}.
+ * <p>JSON model data is made available to templates through a custom
+ * {@link com.encircle360.oss.straightmail.wrapper.JsonNodeObjectWrapper}, which is installed on the
+ * shared {@link Configuration} at startup by
+ * {@link com.encircle360.oss.straightmail.config.FreemarkerSecurityConfig} together with the
+ * template sandbox.
  */
 @Service
 @RequiredArgsConstructor
@@ -45,8 +48,6 @@ public class FreemarkerService {
     private String DEFAULT_TEMPLATE = null;
 
     private final String DEFAULT_LOCALE = Locale.getDefault().getLanguage();
-
-    private final JsonNodeObjectWrapper jsonNodeObjectWrapper;
 
     private final Configuration freemarkerConfiguration;
 
@@ -73,7 +74,6 @@ public class FreemarkerService {
             locale = DEFAULT_LOCALE;
         }
 
-        freemarkerConfiguration.setObjectWrapper(jsonNodeObjectWrapper);
         Template template = new Template("email", new StringReader(templateContent), freemarkerConfiguration);
         return this.processTemplate(template, locale, modelMap);
     }
@@ -143,7 +143,6 @@ public class FreemarkerService {
 
         String templatePath = emailTemplateFileId + ".ftl";
 
-        freemarkerConfiguration.setObjectWrapper(jsonNodeObjectWrapper);
         Template template = freemarkerConfiguration.getTemplate(templatePath);
 
         return this.processTemplate(template, locale, modelMap);

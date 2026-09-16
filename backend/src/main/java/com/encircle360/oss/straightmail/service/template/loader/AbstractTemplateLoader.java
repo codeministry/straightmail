@@ -50,6 +50,11 @@ public abstract class AbstractTemplateLoader implements TemplateLoader {
     }
 
     private String readTemplateFile(String path) {
+        if (escapesTemplateRoot(path)) {
+            log.warn("Rejected template path '{}': it would leave the templates root.", path);
+            return null;
+        }
+
         String fullClassPath = "templates/" + path;
         Resource resource = new ClassPathResource(fullClassPath);
         if (resource.exists()) {
@@ -61,13 +66,13 @@ public abstract class AbstractTemplateLoader implements TemplateLoader {
             }
         }
 
-        String fullFsPath = "/resources/templates/" + path;
-        Path filePath = Paths.get(fullFsPath);
-        if (Files.exists(filePath)) {
+        Path templateRoot = Paths.get("/resources/templates").toAbsolutePath().normalize();
+        Path filePath = templateRoot.resolve(path).normalize();
+        if (filePath.startsWith(templateRoot) && Files.exists(filePath)) {
             try {
                 return Files.readString(filePath);
             } catch (Exception e) {
-                log.error("Error while reading template {} from filesystem.", fullFsPath, e);
+                log.error("Error while reading template {} from filesystem.", filePath, e);
                 return null;
             }
         }
@@ -102,5 +107,24 @@ public abstract class AbstractTemplateLoader implements TemplateLoader {
                 .plain(getOptionalFileContent(plainTemplatePath))
                 .html(getRequiredFileContent(baseTemplatePath))
                 .build();
+    }
+
+    /**
+     * Returns {@code true} when a template path would resolve outside the templates root.
+     *
+     * <p>Template ids reach the loaders from caller-supplied input, so a path containing
+     * {@code ..} or an absolute path must not be read. The classpath lookup is checked here
+     * because {@link ClassPathResource} normalises {@code ..} away rather than refusing it.
+     *
+     * @param path template path relative to the {@code templates/} root
+     * @return {@code true} if the path is absolute or escapes the root
+     */
+    private boolean escapesTemplateRoot(String path) {
+        if (path == null || path.isBlank()) {
+            return true;
+        }
+        Path root = Paths.get("templates").normalize();
+        Path candidate = root.resolve(path).normalize();
+        return !candidate.startsWith(root);
     }
 }

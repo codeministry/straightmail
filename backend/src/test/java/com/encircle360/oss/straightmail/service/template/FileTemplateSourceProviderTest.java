@@ -42,6 +42,43 @@ class FileTemplateSourceProviderTest {
     }
 
     @Test
+    void findTemplate_does_not_escape_the_tenant_directory_into_another_tenant() throws IOException {
+        // a second tenant with a template of its own
+        Path otherTenant = tempDir.resolve("acme-2");
+        Files.createDirectories(otherTenant);
+        Files.writeString(otherTenant.resolve("secret.ftl"), "<h1>acme-2 only</h1>");
+
+        Optional<TemplateView> result = provider.findTemplate("default", "../acme-2/secret");
+
+        assertTrue(result.isEmpty(), "a template name must not resolve outside its tenant directory");
+    }
+
+    @Test
+    void findTemplate_does_not_escape_the_base_directory() throws IOException {
+        Path outside = tempDir.getParent().resolve("outside-" + tempDir.getFileName());
+        Files.createDirectories(outside);
+        Files.writeString(outside.resolve("leak.ftl"), "<h1>outside</h1>");
+
+        String escape = "../" + outside.getFileName() + "/leak";
+        Optional<TemplateView> result = provider.findTemplate("default", escape);
+
+        assertTrue(result.isEmpty(), "a template name must not resolve outside the configured base path");
+    }
+
+    @Test
+    void findTemplate_rejects_an_absolute_name_pointing_outside_the_tenant() throws IOException {
+        // an absolute name would make Path.resolve discard the tenant directory entirely
+        Path otherTenant = tempDir.resolve("acme-3");
+        Files.createDirectories(otherTenant);
+        Files.writeString(otherTenant.resolve("secret.ftl"), "<h1>acme-3 only</h1>");
+
+        String absolute = otherTenant.resolve("secret").toString();
+        Optional<TemplateView> result = provider.findTemplate("default", absolute);
+
+        assertTrue(result.isEmpty(), "an absolute name must not escape the tenant directory");
+    }
+
+    @Test
     void listTemplates_includes_subdirectory_path_in_id() {
         List<TemplateView> views = provider.listTemplates("default", null);
 

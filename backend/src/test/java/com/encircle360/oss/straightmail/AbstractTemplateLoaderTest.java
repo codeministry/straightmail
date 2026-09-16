@@ -27,6 +27,32 @@ public class AbstractTemplateLoaderTest {
     }
 
     @Test
+    void load_template_rejects_an_id_that_leaves_the_templates_root() {
+        // application.yml sits one level above templates/ on the classpath
+        Template template = fileTemplateLoader.loadTemplate("../application");
+
+        assertNull(template.getHtml(), "a traversing template id must not resolve to a file");
+        assertNull(template.getSubject());
+    }
+
+    @Test
+    void load_template_allows_an_id_that_normalises_back_into_the_root() {
+        // emails/../test normalises to test, which is a legitimate template — confinement must not
+        // reject a path merely because it contains ".."
+        Template template = fileTemplateLoader.loadTemplate("emails/../test");
+
+        assertNotNull(template.getHtml());
+    }
+
+    @Test
+    void load_template_rejects_an_absolute_id() {
+        Template template = fileTemplateLoader.loadTemplate("/etc/passwd");
+
+        assertNull(template.getHtml());
+        assertNull(template.getSubject());
+    }
+
+    @Test
     void load_template_with_missing_id_yields_null_fields() {
         Template template = fileTemplateLoader.loadTemplate("__definitely_missing__");
 
