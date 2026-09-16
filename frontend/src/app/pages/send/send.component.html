@@ -46,7 +46,7 @@
     <div class="row g-3 mb-3">
       <div class="col-md-6">
         <app-text-field
-          [control]="byIdForm.get('sender')"
+          [control]="byIdForm.controls.sender"
           [required]="true"
           icon="bi bi-envelope"
           label="send.sender"
@@ -56,7 +56,7 @@
       </div>
       <div class="col-md-6">
         <app-select-field
-          [control]="byIdForm.get('emailTemplateId')"
+          [control]="byIdForm.controls.emailTemplateId"
           [required]="true"
           icon="bi bi-file-earmark-text"
           label="send.template_id"
@@ -84,15 +84,14 @@
     <div class="row g-3 mb-3">
       <div class="col-md-8">
         <app-text-field
-          [control]="byIdForm.get('subject')"
-          [disabled]="isSubjectFromFile()"
+          [control]="byIdForm.controls.subject"
           icon="bi bi-text-left"
           label="send.subject"
           placeholder="send.subject_placeholder"
         />
       </div>
       <div class="col-md-4">
-        <app-select-field [control]="byIdForm.get('locale')" icon="bi bi-globe2" label="send.locale">
+        <app-select-field [control]="byIdForm.controls.locale" icon="bi bi-globe2" label="send.locale">
           @for (loc of localeOptions; track loc) {
             <option [value]="loc">{{ loc }}</option>
           }
@@ -103,7 +102,7 @@
     <!-- Model JSON Accordion -->
     <div class="mb-3">
       <app-accordion-item [defaultCollapsed]="true" icon="bi bi-braces" label="send.model" stateKey="byIdModel">
-        <app-json-model-field [control]="byIdForm.get('model')" [label]="''" [rows]="8"
+        <app-json-model-field [control]="byIdForm.controls.model" [label]="''" [rows]="8"
                               placeholder="send.model_placeholder"/>
       </app-accordion-item>
     </div>
@@ -160,7 +159,7 @@
     <div class="row g-3 mb-3">
       <div class="col-md-6">
         <app-text-field
-          [control]="inlineForm.get('sender')"
+          [control]="inlineForm.controls.sender"
           [required]="true"
           icon="bi bi-envelope"
           label="send.sender"
@@ -170,7 +169,7 @@
       </div>
       <div class="col-md-6">
         <app-text-field
-          [control]="inlineForm.get('subject')"
+          [control]="inlineForm.controls.subject"
           [required]="true"
           icon="bi bi-text-left"
           label="send.subject_required"
@@ -182,7 +181,7 @@
 
     <!-- Locale -->
     <div class="mb-3" style="max-width: 180px;">
-      <app-select-field [control]="inlineForm.get('locale')" icon="bi bi-globe2" label="send.locale">
+      <app-select-field [control]="inlineForm.controls.locale" icon="bi bi-globe2" label="send.locale">
         @for (loc of localeOptions; track loc) {
           <option [value]="loc">{{ loc }}</option>
         }
@@ -193,10 +192,10 @@
     <div class="d-flex flex-column mb-3 gap-3">
       <app-accordion-item [defaultCollapsed]="false" icon="bi bi-code-slash" label="send.email_template"
                           stateKey="inlineTemplate">
-        <app-html-body-field [control]="inlineForm.get('emailTemplate')" [label]="''" [rows]="12"/>
+        <app-html-body-field [control]="inlineForm.controls.emailTemplate" [label]="''" [rows]="12"/>
       </app-accordion-item>
       <app-accordion-item [defaultCollapsed]="true" icon="bi bi-braces" label="send.model" stateKey="inlineModel">
-        <app-json-model-field [control]="inlineForm.get('model')" [label]="''" [rows]="8"
+        <app-json-model-field [control]="inlineForm.controls.model" [label]="''" [rows]="8"
                               placeholder="send.model_placeholder"/>
       </app-accordion-item>
     </div>

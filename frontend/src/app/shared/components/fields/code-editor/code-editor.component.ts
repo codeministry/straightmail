@@ -49,6 +49,14 @@ export class CodeEditorComponent implements ControlValueAccessor, AfterViewInit,
   private langCompartment = new Compartment();
   private editableCompartment = new Compartment();
   private skipUpdate = false;
+  /**
+   * Value and disabled state as last set by the form directive. Reactive forms call
+   * {@link writeValue} and {@link setDisabledState} during directive init, which runs before
+   * {@link ngAfterViewInit} creates the editor — so both are buffered here and applied when the
+   * editor is built (and re-applied whenever it is rebuilt for a placeholder change).
+   */
+  private pendingValue = '';
+  private disabled = false;
 
   constructor() {
     effect(() => {
@@ -68,10 +76,11 @@ export class CodeEditorComponent implements ControlValueAccessor, AfterViewInit,
   }
 
   ngAfterViewInit(): void {
-    this.buildEditor('', this.placeholder());
+    this.buildEditor(this.pendingValue, this.placeholder());
   }
 
   writeValue(value: string | null): void {
+    this.pendingValue = value ?? '';
     if (!this.view) return;
     const cur = this.view.state.doc.toString();
     const next = value ?? '';
@@ -90,6 +99,7 @@ export class CodeEditorComponent implements ControlValueAccessor, AfterViewInit,
   }
 
   setDisabledState(disabled: boolean): void {
+    this.disabled = disabled;
     this.view?.dispatch({
       effects: this.editableCompartment.reconfigure(EditorView.editable.of(!disabled)),
     });
@@ -112,11 +122,12 @@ export class CodeEditorComponent implements ControlValueAccessor, AfterViewInit,
           basicSetup,
           keymap.of([indentWithTab]),
           this.langCompartment.of(langExt),
-          this.editableCompartment.of(EditorView.editable.of(true)),
+          this.editableCompartment.of(EditorView.editable.of(!this.disabled)),
           placeholderExt(placeholderText),
           EditorView.updateListener.of((u) => {
             if (u.docChanged && !this.skipUpdate) {
-              this.onChange(u.state.doc.toString());
+              this.pendingValue = u.state.doc.toString();
+              this.onChange(this.pendingValue);
             }
           }),
           EditorView.domEventHandlers({

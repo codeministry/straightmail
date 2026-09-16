@@ -12,14 +12,9 @@
   }
 </div>
 <textarea
-  #cd="appControlDirty"
-  (ngModelChange)="onChange($event, cd)"
-  [appControlDirty]="control()"
-  [disabled]="disabled()"
+  [formControl]="control()"
   [class.font-mono]="mono()"
-  [class.is-invalid]="control()?.invalid && control()?.touched"
-  [ngModel]="value()"
-  [ngModelOptions]="{ standalone: true }"
+  [class.is-invalid]="control().invalid && control().touched"
   [placeholder]="placeholder() | translate"
   [rows]="rows()"
   class="form-control"

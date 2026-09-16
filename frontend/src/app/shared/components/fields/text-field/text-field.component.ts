@@ -1,25 +1,24 @@
-import { Component, effect, input, signal } from '@angular/core';
-import { AbstractControl, FormsModule } from '@angular/forms';
+import { Component, input } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
 import { FormErrorComponent } from '../form-error/form-error.component';
-import { ControlDirtyDirective } from '../../../directives/control-dirty.directive';
 
 @Component({
   selector: 'app-text-field',
   standalone: true,
-  imports: [FormsModule, TranslatePipe, FormErrorComponent, ControlDirtyDirective],
+  imports: [ReactiveFormsModule, TranslatePipe, FormErrorComponent],
   templateUrl: './text-field.component.html',
 })
 /**
- * Reusable text input field that wraps an {@link AbstractControl}.
+ * Reusable text input field that wraps a {@link FormControl}.
  *
- * Mirrors the control value to an internal signal and writes back through {@link ControlDirtyDirective}
- * so the parent form is marked dirty on user input. Displays validation errors via {@link FormErrorComponent}.
+ * Binds the control directly via {@code [formControl]}, so value synchronisation, dirty/touched
+ * state and the disabled state are handled by reactive forms. Displays validation errors via
+ * {@link FormErrorComponent}.
  */
 export class TextFieldComponent {
   /** The reactive form control to bind to this field. */
-  readonly control = input.required<AbstractControl | null>();
+  readonly control = input.required<FormControl<string | null>>();
   /** Translation key used as the field label. */
   readonly label = input.required<string>();
   /** HTML input type; defaults to {@code 'text'}. */
@@ -30,29 +29,4 @@ export class TextFieldComponent {
   readonly required = input(false);
   /** Bootstrap icon class rendered as a prefix icon (e.g. {@code 'bi-envelope'}). */
   readonly icon = input<string>('');
-  /** When {@code true}, renders the input as non-interactive (HTML {@code disabled} attribute). */
-  readonly disabled = input(false);
-
-  protected value = signal('');
-  private sub?: Subscription;
-
-  constructor() {
-    effect(() => {
-      this.sub?.unsubscribe();
-      const ctrl = this.control();
-      if (!ctrl) return;
-      this.value.set(ctrl.value ?? '');
-      this.sub = ctrl.valueChanges.subscribe((v) => this.value.set(v ?? ''));
-    });
-  }
-
-  /**
-   * Propagates the new value to the form control via {@link ControlDirtyDirective}.
-   *
-   * @param v The new string value entered by the user.
-   * @param cd The dirty directive responsible for updating the control and marking it dirty.
-   */
-  onChange(v: string, cd: ControlDirtyDirective): void {
-    cd.setValue(v);
-  }
 }

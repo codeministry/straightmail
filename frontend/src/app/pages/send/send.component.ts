@@ -157,8 +157,6 @@ export class SendComponent implements OnInit {
         // Disable first so the group's valueChanges won't fire for the patchValue below
         // (disabled controls are excluded from FormGroup.valueChanges).
         subjectCtrl.disable({ emitEvent: false });
-        // No emitEvent:false here — TextFieldComponent's internal value signal is driven
-        // solely by valueChanges, so we must let the event fire to refresh the display.
         subjectCtrl.patchValue(template?.subject ?? '');
       } else {
         subjectCtrl.enable({ emitEvent: false });

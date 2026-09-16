@@ -28,7 +28,7 @@
 
       <div class="mb-3">
         <app-select-field
-          [control]="form.get('templateId')"
+          [control]="form.controls.templateId"
           [required]="true"
           icon="bi bi-file-earmark-text"
           label="render.template_id"
@@ -53,7 +53,7 @@
 
       <div class="mb-4">
         <app-json-model-field
-          [control]="form.get('model')"
+          [control]="form.controls.model"
           [rows]="8"
           icon="bi bi-braces"
           label="render.model"

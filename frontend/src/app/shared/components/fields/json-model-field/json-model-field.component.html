@@ -10,12 +10,8 @@
   </button>
 </div>
 <app-code-editor
-  #cd="appControlDirty"
-  (ngModelChange)="onValueChange($event, cd)"
-  [appControlDirty]="control()"
-  [class.is-invalid]="control()?.invalid && control()?.touched"
-  [ngModel]="editorValue()"
-  [ngModelOptions]="{ standalone: true }"
+  [formControl]="control()"
+  [class.is-invalid]="control().invalid && control().touched"
   [placeholder]="resolvedPlaceholder()"
   [rows]="rows()"
   language="json"
