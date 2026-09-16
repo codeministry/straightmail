@@ -9,7 +9,9 @@ import { environment } from '../../../environments/environment';
 import { TenantState } from '../../store/tenant/tenant.state';
 import { AuthState } from '../../store/auth/auth.state';
 
-const apiBasePath = new URL(environment.apiUrl).pathname;
+// environment.apiUrl may be relative (the backend's default is "/api"), so a base is
+// required — new URL('/api') throws.
+const apiBasePath = new URL(environment.apiUrl, window.location.origin).pathname;
 
 /**
  * HTTP interceptor for OIDC/JWT authentication mode ({@code environment.authEnabled === true}).
@@ -23,8 +25,10 @@ const apiBasePath = new URL(environment.apiUrl).pathname;
  * Requests outside the API base path are forwarded unchanged.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const reqPath = new URL(req.url, window.location.origin).pathname;
-  if (!reqPath.startsWith(apiBasePath)) {
+  // Credentials are attached by origin AND path: a same-path URL on a foreign host must never
+  // receive the bearer token, however that URL came to be.
+  const target = new URL(req.url, window.location.origin);
+  if (target.origin !== window.location.origin || !target.pathname.startsWith(apiBasePath)) {
     return next(req);
   }
 

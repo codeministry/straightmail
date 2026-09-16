@@ -65,6 +65,18 @@ describe('apiKeyInterceptor', () => {
     req.flush({});
   });
 
+  it('should not send the API key to a foreign origin with the same path', () => {
+    store.dispatch(new SetApiKey('my-secret-key'));
+
+    // same path, different host — the credential must not travel there
+    http.get('https://attacker.example/api/v1/templates').subscribe();
+
+    const req = httpTesting.expectOne('https://attacker.example/api/v1/templates');
+    expect(req.request.headers.has('X-API-KEY')).toBe(false);
+    expect(req.request.headers.has('X-Tenant-ID')).toBe(false);
+    req.flush({});
+  });
+
   it('should navigate to /api-key-login on 401 response', () => {
     store.dispatch(new SetApiKey('my-secret-key'));
 

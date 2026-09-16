@@ -9,7 +9,9 @@ import { TenantState } from '../../store/tenant/tenant.state';
 import { ClearApiKey } from '../../store/api-key/api-key.actions';
 import { TenantActions } from '../../store/tenant/tenant.actions';
 
-const apiBasePath = new URL(environment.apiUrl).pathname;
+// environment.apiUrl may be relative (the backend's default is "/api"), so a base is
+// required — new URL('/api') throws.
+const apiBasePath = new URL(environment.apiUrl, window.location.origin).pathname;
 
 /**
  * HTTP interceptor for API-key authentication mode ({@code environment.authEnabled === false}).
@@ -21,8 +23,10 @@ const apiBasePath = new URL(environment.apiUrl).pathname;
  * Requests outside the API base path are forwarded unchanged.
  */
 export const apiKeyInterceptor: HttpInterceptorFn = (req, next) => {
-  const reqPath = new URL(req.url, window.location.origin).pathname;
-  if (!reqPath.startsWith(apiBasePath)) {
+  // Credentials are attached by origin AND path: a same-path URL on a foreign host must never
+  // receive the X-API-KEY, however that URL came to be.
+  const target = new URL(req.url, window.location.origin);
+  if (target.origin !== window.location.origin || !target.pathname.startsWith(apiBasePath)) {
     return next(req);
   }
 
