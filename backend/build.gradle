@@ -1,5 +1,5 @@
 plugins {
-    id "org.springframework.boot" version "4.0.6"
+    id "org.springframework.boot" version "4.1.1"
     id "io.spring.dependency-management" version "1.1.7"
     id "java"
     id "jacoco"
@@ -9,8 +9,9 @@ group = 'com.encircle360.oss.straightmail'
 version '0.5.0'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
 }
 
 repositories {
@@ -27,20 +28,20 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     runtimeOnly 'org.postgresql:postgresql'
-    runtimeOnly 'org.xerial:sqlite-jdbc:3.49.1.0'
-    implementation 'org.hibernate.orm:hibernate-community-dialects:7.2.12.Final'
+    runtimeOnly 'org.xerial:sqlite-jdbc:3.53.4.0'
+    implementation 'org.hibernate.orm:hibernate-community-dialects:7.4.5.Final'
     implementation 'org.liquibase:liquibase-core'
     // Spring Boot 4 modularization: Liquibase auto-configuration extracted into its own module
     implementation 'org.springframework.boot:spring-boot-liquibase'
 
     // jsoup for cleaning html mail to text
-    implementation group: 'org.jsoup', name: 'jsoup', version: '1.22.2'
+    implementation group: 'org.jsoup', name: 'jsoup', version: '1.23.2'
 
     // lombok & mapstruct
-    compileOnly "org.projectlombok:lombok:1.18.46"
-    annotationProcessor 'org.projectlombok:lombok:1.18.46'
-    testCompileOnly 'org.projectlombok:lombok:1.18.46'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.46'
+    compileOnly "org.projectlombok:lombok:1.18.48"
+    annotationProcessor 'org.projectlombok:lombok:1.18.48'
+    testCompileOnly 'org.projectlombok:lombok:1.18.48'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.48'
 
     implementation 'org.mapstruct:mapstruct:1.6.3'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
@@ -53,14 +54,14 @@ dependencies {
     // Jackson 3 (Spring Boot 4): java.time support is built-in, no separate jsr310 module needed.
 
     // OpenAPI documentation - compatible with Spring Boot 4.x (Jackson 3)
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1'
 
     // JGit for Git template sync
-    implementation 'org.eclipse.jgit:org.eclipse.jgit:7.6.0.202603022253-r'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:7.8.0.202609011348-r'
 
     // ShedLock for distributed scheduling (HA-safe git-sync)
-    implementation 'net.javacrumbs.shedlock:shedlock-spring:7.7.0'
-    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.7.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:7.10.1'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.10.1'
 
     // Observability: Micrometer tracing with OpenTelemetry bridge and OTLP exporter
     implementation 'io.micrometer:micrometer-tracing-bridge-otel'
