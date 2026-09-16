@@ -1,0 +1,45 @@
+name: Cleanup Old Packages
+
+# Until now there was no cleanup here at all.
+#
+# Two peculiarities in this repo:
+#   * backend.yml/monorepo.yml use a registry build cache
+#     (ghcr.io/codeministry/straightmail/backend:buildcache). That tag is hard-protected
+#     in the reusable workflow — without it every build after the first one would be
+#     a cold build.
+#   * release.yml uses actions/attest-build-provenance (subject-name), which creates
+#     sha256-<digest> referrer tags. delete-orphaned-images cleans those up as soon as
+#     the parent digest is gone.
+#
+# straightmail-app uses update-strategy: newest-build with tag-filter
+# regexp:^[0-9a-f]{7}$ — so the 7-hex commit tags are the deploy path. keep-tagged: 15
+# leaves rollback room across the last 15 builds.
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'   # Sundays 02:00 UTC
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Only log, delete nothing'
+        type: boolean
+        default: true
+
+# The called workflow can NEVER have more permissions than the caller —
+# without this block the repo default applies and the cleanup fails with 403.
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  images:
+    name: Images — straightmail + backend
+    uses: codeministry/helm-charts/.github/workflows/ghcr-cleanup.yml@main
+    with:
+      packages: straightmail,straightmail/backend
+      keep-tagged: 15
+      exclude-tags: 'v*,[0-9]*.[0-9]*'
+      # ROLLOUT GATE: the "github.event_name == 'schedule' ||" part keeps the SCHEDULED
+      # run in dry-run mode. Remove it (leaving "inputs.dry-run || false") only once the
+      # manual dry-run has been verified for this repo.
+      dry-run: ${{ github.event_name == 'schedule' || inputs.dry-run }}
