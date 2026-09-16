@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.server.ResponseStatusException;
@@ -182,5 +184,57 @@ class TenantIntegrationTest extends AbstractTest {
         tenantService.create(dto);
 
         assertThrows(ResponseStatusException.class, () -> tenantService.create(dto));
+    }
+
+    @Test
+    void tenant_list_is_refused_for_a_non_admin_api_key() throws Exception {
+        // a per-tenant key authenticates as ROLE_USER; tenant administration is admin-only
+        tenantService.create(CreateUpdateTenantDTO.builder()
+                .slug("scoped-tenant")
+                .displayName("Scoped Tenant")
+                .apiKey("scoped-tenant-key")
+                .build());
+
+        mock.perform(MockMvcRequestBuilders.get("/v1/tenants")
+                        .header("X-API-KEY", "scoped-tenant-key")
+                        .header("X-Tenant-ID", "scoped-tenant")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void single_tenant_read_is_refused_for_a_non_admin_api_key() throws Exception {
+        tenantService.create(CreateUpdateTenantDTO.builder()
+                .slug("scoped-a")
+                .displayName("Scoped A")
+                .apiKey("scoped-a-key")
+                .build());
+        tenantService.create(CreateUpdateTenantDTO.builder()
+                .slug("scoped-b")
+                .displayName("Scoped B")
+                .build());
+
+        // reading a foreign tenant's mail and git configuration must not be possible
+        mock.perform(MockMvcRequestBuilders.get("/v1/tenants/scoped-b")
+                        .header("X-API-KEY", "scoped-a-key")
+                        .header("X-Tenant-ID", "scoped-a")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void own_tenants_remain_readable_for_a_non_admin_api_key() throws Exception {
+        tenantService.create(CreateUpdateTenantDTO.builder()
+                .slug("scoped-me")
+                .displayName("Scoped Me")
+                .apiKey("scoped-me-key")
+                .build());
+
+        // /me is the endpoint the login flow depends on — it must stay open to ROLE_USER
+        mock.perform(MockMvcRequestBuilders.get("/v1/tenants/me")
+                        .header("X-API-KEY", "scoped-me-key")
+                        .header("X-Tenant-ID", "scoped-me")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isOk());
     }
 }

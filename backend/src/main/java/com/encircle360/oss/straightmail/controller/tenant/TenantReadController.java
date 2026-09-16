@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -51,12 +52,17 @@ public class TenantReadController {
     private final JwtTenantClaimsExtractor claimsExtractor;
 
     /**
-     * Returns all tenants in the system, regardless of the caller's identity.
+     * Returns all tenants in the system.
+     *
+     * <p>Administration-only: a {@link TenantDTO} carries another tenant's mail relay host, SMTP
+     * user and git repository URL, so this must not be readable by a tenant-scoped caller. Callers
+     * that only need their own tenants use {@link #me()}, which filters by identity.
      *
      * @return {@code 200 OK} with a list of all {@link TenantDTO} objects
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(operationId = "listTenants", description = "Returns all tenants")
+    @Operation(operationId = "listTenants", description = "Returns all tenants (admin only)")
     public ResponseEntity<List<TenantDTO>> list() {
         TenantService service = tenantService.getIfAvailable();
         if (service != null) {
@@ -123,12 +129,15 @@ public class TenantReadController {
     /**
      * Returns a single tenant by its slug identifier.
      *
+     * <p>Administration-only for the same reason as {@link #list()}.
+     *
      * @param slug the tenant's unique slug
      * @return {@code 200 OK} with the matching {@link TenantDTO}
      * @throws ResponseStatusException {@code 404 NOT FOUND} if no tenant exists with this slug
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping(value = "/{slug}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(operationId = "getTenant", description = "Returns a tenant by slug")
+    @Operation(operationId = "getTenant", description = "Returns a tenant by slug (admin only)")
     public ResponseEntity<TenantDTO> get(@PathVariable String slug) {
         TenantService service = tenantService.getIfAvailable();
         if (service != null) {
