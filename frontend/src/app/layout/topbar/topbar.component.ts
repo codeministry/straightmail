@@ -72,6 +72,6 @@ export class TopbarComponent {
       position: isMobile ? 'bottom' : 'end',
       panelClass: isMobile ? 'help-offcanvas help-offcanvas--bottom' : 'help-offcanvas',
     });
-    ref.componentInstance.activeSection = section;
+    ref.componentInstance.activeSection.set(section);
   }
 }

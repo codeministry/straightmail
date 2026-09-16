@@ -3,7 +3,7 @@ import {
   inject,
   isDevMode,
   provideAppInitializer,
-  provideBrowserGlobalErrorListeners
+  provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { catchError, of, switchMap } from 'rxjs';
@@ -14,7 +14,11 @@ import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { provideStore, Store } from '@ngxs/store';
 import { withNgxsLoggerPlugin } from '@ngxs/logger-plugin';
 import { withNgxsReduxDevtoolsPlugin } from '@ngxs/devtools-plugin';
-import { LOCAL_STORAGE_ENGINE, SESSION_STORAGE_ENGINE, withNgxsStoragePlugin } from '@ngxs/storage-plugin';
+import {
+  LOCAL_STORAGE_ENGINE,
+  SESSION_STORAGE_ENGINE,
+  withNgxsStoragePlugin,
+} from '@ngxs/storage-plugin';
 import { provideAuth } from 'angular-auth-oidc-client';
 
 import { routes } from './app.routes';

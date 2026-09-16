@@ -94,9 +94,9 @@ export class TenantFormComponent implements OnInit, CanDeactivateComponent {
   });
 
   /** Whether a save request is currently in flight. */
-  saving = false;
+  readonly saving = signal(false);
   /** Error message to display when the save request fails. */
-  formError = '';
+  readonly formError = signal('');
   /** Set to {@code true} after a successful save to suppress the unsaved-changes guard. */
   private saved = false;
 
@@ -201,8 +201,8 @@ export class TenantFormComponent implements OnInit, CanDeactivateComponent {
       return;
     }
 
-    this.saving = true;
-    this.formError = '';
+    this.saving.set(true);
+    this.formError.set('');
 
     const raw = this.form.getRawValue();
     const branches = this.gitBranches.controls.map((c) => c.value as string).filter((v) => !!v);
@@ -236,13 +236,13 @@ export class TenantFormComponent implements OnInit, CanDeactivateComponent {
 
     request.subscribe({
       next: () => {
-        this.saving = false;
+        this.saving.set(false);
         this.saved = true;
         this.router.navigate(['/tenants']);
       },
       error: (err) => {
-        this.saving = false;
-        this.formError = err.error?.message ?? this.translate.instant('tenants.save_error');
+        this.saving.set(false);
+        this.formError.set(err.error?.message ?? this.translate.instant('tenants.save_error'));
       },
     });
   }

@@ -31,7 +31,7 @@ Playwright) are uploaded as artifacts on failure for quick diagnosis.
 ### `backend.yml` — Backend CI
 
 Runs on push and pull requests to `main` that touch files under `backend/**`. Builds the JAR
-with Java 21 and Gradle, executes the test suite with JaCoCo coverage reporting, and — on
+with Java 25 and Gradle, executes the test suite with JaCoCo coverage reporting, and — on
 direct pushes to `main` — publishes a backend-only multi-arch Docker image to `ghcr.io`.
 
 **Jobs:** `build` · `test` (JaCoCo) · `docker` (main branch only)  

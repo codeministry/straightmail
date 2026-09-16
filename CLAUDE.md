@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-### Backend (Spring Boot / Java 21)
+### Backend (Spring Boot / Java 25)
 
 ```bash
 cd backend
@@ -31,7 +31,7 @@ SPRING_PROFILES_ACTIVE=dev,database ./gradlew bootRun
 SKIP_FRONTEND_BUILD=true ./gradlew build
 ```
 
-### Frontend (Angular 21)
+### Frontend (Angular 22)
 
 ```bash
 cd frontend
@@ -68,8 +68,8 @@ openssl rand -base64 32   # paste output into encryption.key in application-loca
 ### Monorepo layout
 
 ```
-backend/    Spring Boot 4 / Java 21 — mail API + FreeMarker renderer
-frontend/   Angular 21 — admin console
+backend/    Spring Boot 4 / Java 25 — mail API + FreeMarker renderer
+frontend/   Angular 22 — admin console
 docker/     Four Compose stacks (minimal, apikey-sqlite, oidc-sqlite, oidc-postgres)
 ```
 
@@ -107,7 +107,7 @@ The backend is a standard Spring Boot layered app (`controller → service → r
 
 ### Frontend
 
-Angular 21 with standalone components and NGXS state management.
+Angular 22 with standalone components and NGXS state management.
 
 **State slices** (`src/app/store/`): `auth`, `api-key`, `tenant`, `toast`, `ui`. State is persisted via `@ngxs/storage-plugin`.
 

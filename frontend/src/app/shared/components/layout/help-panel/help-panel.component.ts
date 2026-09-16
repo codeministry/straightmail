@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, signal } from '@angular/core';
 import { NgbActiveOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -21,11 +21,10 @@ export class HelpPanelComponent implements AfterViewInit {
    * (e.g. {@code 'dashboard'}, {@code 'templates'}, {@code 'send'}, {@code 'render'}).
    * {@code null} means no auto-scroll.
    */
-  activeSection: string | null = null;
+  readonly activeSection = signal<string | null>(null);
 
   private readonly el = inject(ElementRef);
-
-  constructor(public activeOffcanvas: NgbActiveOffcanvas) {}
+  readonly activeOffcanvas = inject(NgbActiveOffcanvas);
 
   ngAfterViewInit(): void {
     const active = this.el.nativeElement.querySelector('.help-section--active');

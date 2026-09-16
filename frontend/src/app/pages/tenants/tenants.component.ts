@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -28,12 +28,11 @@ import { environment } from '../../../environments/environment';
  */
 export class TenantsComponent implements OnInit {
   /** The currently loaded list of tenants. */
-  tenants: TenantDTO[] = [];
+  readonly tenants = signal<TenantDTO[]>([]);
   /** Whether a backend request is currently in flight. */
-  loading = false;
+  readonly loading = signal(false);
 
   private readonly http = inject(HttpClient);
-  private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
@@ -52,16 +51,14 @@ export class TenantsComponent implements OnInit {
 
   /** Fetches all tenants from the admin endpoint and updates the component state. */
   loadTenants(): void {
-    this.loading = true;
+    this.loading.set(true);
     this.http.get<TenantDTO[]>(this.apiUrl).subscribe({
       next: (tenants) => {
-        this.tenants = tenants;
-        this.loading = false;
-        this.cdr.detectChanges();
+        this.tenants.set(tenants);
+        this.loading.set(false);
       },
       error: () => {
-        this.loading = false;
-        this.cdr.detectChanges();
+        this.loading.set(false);
       },
     });
   }

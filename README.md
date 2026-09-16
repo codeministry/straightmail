@@ -6,9 +6,9 @@
 [![Container](https://img.shields.io/badge/ghcr.io-encircle360--oss%2Fstraightmail-blue?logo=docker)](https://github.com/encircle360-oss/straightmail/pkgs/container/straightmail)
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Java 21](https://img.shields.io/badge/Java-21-orange?logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
+[![Java 25](https://img.shields.io/badge/Java-25-orange?logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Angular](https://img.shields.io/badge/Angular-21.2-DD0031?logo=angular&logoColor=white)](https://angular.io)
+[![Angular](https://img.shields.io/badge/Angular-22.1-DD0031?logo=angular&logoColor=white)](https://angular.io)
 [![Matrix](https://img.shields.io/badge/Matrix-Join%20Chat-0dbd8b?logo=matrix&logoColor=white)](https://matrix.to/#/#oss:encircle360.com)
 
 **straightmail** is a mail sending API with template and i18n support, combined with a modern Angular administration
@@ -57,7 +57,7 @@ This repository contains the straightmail backend and admin frontend as a monore
 
 ```
 straightmail/
-├── backend/          # Spring Boot Application (Java 21)
+├── backend/          # Spring Boot Application (Java 25)
 ├── frontend/         # Angular Admin Frontend
 ├── docker/           # Mode-specific Docker Compose stacks
 ├── .github/workflows # CI/CD pipelines

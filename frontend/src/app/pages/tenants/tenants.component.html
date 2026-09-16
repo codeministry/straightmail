@@ -1,6 +1,10 @@
 <app-page-header [title]="'tenants.title' | translate" icon="building">
   <div class="d-flex align-items-center gap-2">
-    <div class="btn-group d-none d-md-flex" role="group" [attr.aria-label]="'tenants.view_toggle' | translate">
+    <div
+      class="btn-group d-none d-md-flex"
+      role="group"
+      [attr.aria-label]="'tenants.view_toggle' | translate"
+    >
       <button
         class="btn btn-md"
         [class.btn-secondary]="viewMode() === 'grid'"
@@ -34,8 +38,8 @@
   <app-tenant-grid
     class="d-block"
     [class.d-md-none]="viewMode() === 'list'"
-    [tenants]="tenants"
-    [loading]="loading"
+    [tenants]="tenants()"
+    [loading]="loading()"
     (delete)="confirmDelete($event)"
   />
 
@@ -43,8 +47,8 @@
   @if (viewMode() === 'list') {
     <app-tenant-table
       class="d-none d-md-block"
-      [tenants]="tenants"
-      [loading]="loading"
+      [tenants]="tenants()"
+      [loading]="loading()"
       (edit)="openEdit($event)"
       (view)="openView($event)"
       (delete)="confirmDelete($event)"

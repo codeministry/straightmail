@@ -1,7 +1,7 @@
 <div class="d-flex justify-content-between align-items-center mb-1">
   <label class="form-label mb-0">
     @if (icon()) {
-      <i [class]="icon()" style="margin-right: 6px;"></i>
+      <i [class]="icon()" style="margin-right: 6px"></i>
     }
     {{ label() | translate }}
   </label>
@@ -19,8 +19,9 @@
   [class.font-mono]="mono()"
   [class.is-invalid]="control()?.invalid && control()?.touched"
   [ngModel]="value()"
+  [ngModelOptions]="{ standalone: true }"
   [placeholder]="placeholder() | translate"
   [rows]="rows()"
   class="form-control"
 ></textarea>
-<app-form-error [control]="control()"/>
+<app-form-error [control]="control()" />
