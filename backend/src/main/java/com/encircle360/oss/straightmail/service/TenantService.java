@@ -102,11 +102,11 @@ public class TenantService {
 
         String newRepoUrl = tenant.getGitRepoUrl();
         if (hasValue(oldRepoUrl) && !hasValue(newRepoUrl)) {
-            // Git-Repo entfernt: gesamte Git-Daten des Tenants bereinigen
+            // Git repo removed: clean up all Git data for this tenant
             gitSyncStatusRepository.deleteById(slug);
             gitTemplateCacheRepository.deleteAllByTenantId(slug);
         } else {
-            // Einzelne Branches entfernt: Cache für entfernte Branches bereinigen
+            // Individual branches removed: clean up the cache for the removed branches
             Set<String> newBranches = tenant.getGitBranches() != null
                     ? Set.copyOf(tenant.getGitBranches()) : Set.of();
             oldBranches.stream()

@@ -3,7 +3,7 @@
     <h1 class="api-key-login__title">Straightmail</h1>
     <form (ngSubmit)="submit()" #form="ngForm">
       <div class="mb-3">
-        <label for="apiKey" class="form-label">API Key</label>
+        <label for="apiKey" class="form-label">{{ 'login.api_key' | translate }}</label>
         <input
           id="apiKey"
           type="password"
@@ -16,13 +16,13 @@
         />
       </div>
       @if (errorMessage()) {
-        <div class="alert alert-danger" role="alert">{{ errorMessage() }}</div>
+        <div class="alert alert-danger" role="alert">{{ errorMessage() | translate }}</div>
       }
       <button type="submit" class="btn btn-primary w-100" [disabled]="loading() || !apiKey">
         @if (loading()) {
           <span class="spinner-border spinner-border-sm me-2" role="status"></span>
         }
-        Anmelden
+        {{ 'login.submit' | translate }}
       </button>
     </form>
   </div>

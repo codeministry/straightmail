@@ -208,5 +208,11 @@
     "highlight_text": "Für eine bessere Übersicht verfügen alle Code-Editoren (HTML und JSON) über eine intelligente Syntax-Hervorhebung. Dies hilft Ihnen, Fehler in Ihren Vorlagen oder Datenmodellen schneller zu erkennen.",
     "freemarker_title": "Vorlagen-Variablen (FreeMarker)",
     "freemarker_text": "E-Mail-Vorlagen werden in FreeMarker-Syntax geschrieben. Verwenden Sie ${Variablenname}, um Werte aus dem JSON-Modell einzufügen, das Sie beim Senden oder Rendern angeben. Schleifen und Bedingungen werden ebenfalls unterstützt: Mit <#list items as item>…</#list> iterieren Sie über eine Liste, mit <#if Bedingung>…</#if> erzeugen Sie bedingte Ausgaben. Eingebaute Funktionen wie ${name?upper_case} oder ${betrag?string[\"0.00\"]} ermöglichen die direkte Formatierung von Werten. Betreff und Reintext unterstützen dieselbe Syntax wie der HTML-Text."
+  },
+  "login": {
+    "api_key": "API Key",
+    "submit": "Anmelden",
+    "invalid_key": "Ungültiger API Key.",
+    "connection_error": "Verbindungsfehler. Bitte versuchen Sie es erneut."
   }
 }

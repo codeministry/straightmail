@@ -31,7 +31,7 @@ export class ApiKeyLoginComponent {
   apiKey = '';
   /** Whether a login request is currently in flight. */
   readonly loading = signal(false);
-  /** Inline error message to display when login fails. */
+  /** Translation key of the inline error message to display when login fails. */
   readonly errorMessage = signal('');
 
   private readonly store = inject(Store);
@@ -56,11 +56,7 @@ export class ApiKeyLoginComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set(
-          err.status === 401
-            ? 'Ungültiger API Key'
-            : 'Verbindungsfehler. Bitte versuche es erneut.',
-        );
+        this.errorMessage.set(err.status === 401 ? 'login.invalid_key' : 'login.connection_error');
       },
     });
   }

@@ -208,5 +208,11 @@
     "highlight_text": "For a better overview, all code editors (HTML and JSON) feature intelligent syntax highlighting. This helps you to identify errors in your templates or data models more quickly.",
     "freemarker_title": "Template Variables (FreeMarker)",
     "freemarker_text": "Email templates are written in FreeMarker syntax. Use ${variableName} to insert values from the JSON model you provide at send or render time. Loops and conditionals are also supported: use <#list items as item>…</#list> to iterate over a list and <#if condition>…</#if> for conditional output. Built-in functions like ${name?upper_case} or ${amount?string[\"0.00\"]} let you format values inline. The Subject and Plain Text fields support the same syntax as the HTML body."
+  },
+  "login": {
+    "api_key": "API Key",
+    "submit": "Sign In",
+    "invalid_key": "Invalid API key.",
+    "connection_error": "Connection error. Please try again."
   }
 }
