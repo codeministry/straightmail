@@ -15,8 +15,10 @@ java {
 }
 
 repositories {
-    mavenLocal()
+    // mavenCentral first: a stale or poisoned artifact in the local ~/.m2 must not win
+    // over the published one on a developer machine or a self-hosted runner.
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {

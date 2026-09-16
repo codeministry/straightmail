@@ -4,6 +4,24 @@ This folder contains four pre-configured Compose stacks, one per operating mode.
 Each stack starts fully without any manual configuration: databases, Keycloak (including
 an imported realm), Mailpit, and the app are ready to use immediately.
 
+## These stacks are for local development
+
+All four stacks bind their ports to `127.0.0.1`, ship dev credentials (`admin/admin` for
+Keycloak, `straightmail/straightmail` for Postgres, `dev-api-key-change-me` for the API key)
+and run without the `production` Spring profile, so Swagger UI and `/v3/api-docs` are reachable.
+That is intended here and unsafe anywhere else.
+
+For a real deployment, start from these files but change at least the following:
+
+- set `SPRING_PROFILES_ACTIVE` to include `production` — this disables Swagger UI and `/v3/api-docs`
+- generate a fresh `ENCRYPTION_KEY` (`openssl rand -base64 32`) and keep it out of the compose file
+- replace every credential above
+- do not publish the management port `50004`; it carries no authentication of its own
+- put a TLS terminator in front, otherwise HSTS is not sent and the `/api/v1/info` response that
+  configures the client's OIDC authority travels in clear text
+
+---
+
 ## Prerequisites (Build)
 
 The backend and frontend images are built from source. The Dockerfile expects a

@@ -92,7 +92,13 @@ const ngxsProviders = [
       ApiKeyState,
       DashboardState,
     ],
-    { developmentMode: isDevMode() },
+    {
+      developmentMode: isDevMode(),
+      // NGXS compiles selector property getters with new Function(), which a Content-Security-Policy
+      // without 'unsafe-eval' blocks — and the app then fails to bootstrap. This opts into the safe
+      // accessor so script-src can stay strict.
+      compatibility: { strictContentSecurityPolicy: true },
+    },
     withNgxsLoggerPlugin({ disabled: !isDevMode() }),
     withNgxsReduxDevtoolsPlugin({ disabled: !isDevMode() }),
     withNgxsStoragePlugin({

@@ -34,9 +34,17 @@ spring:
 
 server:
   port: 50003
+  # Required for Spring Security to recognise HTTPS behind a TLS terminator and emit HSTS.
+  forward-headers-strategy: framework
 management:
   server:
     port: 50004
+  endpoints:
+    web:
+      exposure:
+        # Explicit rather than relying on the framework default, so a future Boot version
+        # cannot widen this surface silently. The management port carries no authentication.
+        include: ${MANAGEMENT_ENDPOINTS:health}
 
 ---
 

@@ -5,6 +5,7 @@ import com.encircle360.oss.straightmail.tenant.filter.ApiKeyTenantResolutionFilt
 import com.encircle360.oss.straightmail.tenant.filter.JwtTenantResolutionFilter;
 import com.encircle360.oss.straightmail.tenant.filter.NoAuthTenantResolutionFilter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -58,6 +59,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
  * <p>Custom filters are registered via {@link FilterRegistrationBean} with {@code enabled=false} to
  * prevent Spring Boot from auto-registering them outside the security filter chain.
  */
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -66,6 +68,13 @@ public class SecurityConfig {
 
     @Value("${api.prefix:/api}")
     private String apiPrefix;
+
+    @Value("${auth.issuer-uri:}")
+    private String issuerUriForCsp;
+
+    /** Full Content-Security-Policy override; when blank the policy is derived from the deployment. */
+    @Value("${security.content-security-policy:}")
+    private String contentSecurityPolicyOverride;
 
     private final ObjectProvider<JwtTenantResolutionFilter> jwtTenantResolutionFilter;
     private final ObjectProvider<ApiKeyAuthenticationFilter> apiKeyAuthenticationFilter;
@@ -161,6 +170,8 @@ public class SecurityConfig {
                         )
                 );
 
+        this.applySecurityHeaders(http);
+
         JwtTenantResolutionFilter jwtFilter = jwtTenantResolutionFilter.getIfAvailable();
         if (jwtFilter != null) {
             http.addFilterAfter(jwtFilter, BearerTokenAuthenticationFilter.class);
@@ -188,6 +199,8 @@ public class SecurityConfig {
                 .cors(withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+
+        this.applySecurityHeaders(http);
 
         ApiKeyAuthenticationFilter apiKeyFilter = apiKeyAuthenticationFilter.getIfAvailable();
         ApiKeyTenantResolutionFilter apiKeyTenantFilter = apiKeyTenantResolutionFilter.getIfAvailable();
@@ -221,6 +234,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .anonymous(anon -> anon.authorities("ROLE_ADMIN"))
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+
+        this.applySecurityHeaders(http);
 
         NoAuthTenantResolutionFilter noAuthFilter = noAuthTenantResolutionFilter.getIfAvailable();
         if (noAuthFilter != null) {
@@ -264,5 +279,84 @@ public class SecurityConfig {
         FilterRegistrationBean<NoAuthTenantResolutionFilter> reg = new FilterRegistrationBean<>(filter);
         reg.setEnabled(false);
         return reg;
+    }
+
+    /**
+     * Applies the response security headers shared by all three auth modes.
+     *
+     * <p>Spring Security already sends {@code X-Content-Type-Options}, {@code X-Frame-Options} and
+     * the no-cache headers by default. What is missing without this block is a
+     * Content-Security-Policy and a {@code Referrer-Policy}, which matter here because the admin SPA
+     * is served from the same origin as the API and holds the access token in browser storage: a
+     * script injected into that origin would read it. HSTS is emitted by Spring only on secure
+     * requests, so {@code server.forward-headers-strategy} must be set for it to appear behind a
+     * TLS terminator.
+     *
+     * @param http the chain under construction
+     * @throws Exception if the headers cannot be configured
+     */
+    private void applySecurityHeaders(HttpSecurity http) throws Exception {
+        http.headers(headers -> headers
+                .contentSecurityPolicy(csp -> csp.policyDirectives(this.buildContentSecurityPolicy()))
+                .referrerPolicy(referrer -> referrer.policy(
+                        org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN))
+                .httpStrictTransportSecurity(hsts -> hsts
+                        .includeSubDomains(true)
+                        .maxAgeInSeconds(31536000))
+        );
+    }
+
+    /**
+     * Builds the Content-Security-Policy for this deployment.
+     *
+     * <p>The allowances are exactly what the shipped admin UI needs: Google Fonts for the stylesheet
+     * and font files ({@code index.html}), Gravatar for user avatars, and — in OIDC mode — the
+     * identity provider, which the browser must reach for the token endpoint, the silent-renew
+     * iframe and the authorize redirect. {@code style-src} needs {@code 'unsafe-inline'} because
+     * Angular injects component styles as inline style elements; scripts do not, so
+     * {@code script-src} stays strict.
+     *
+     * @return the policy directives, or the configured override when one is set
+     */
+    private String buildContentSecurityPolicy() {
+        if (contentSecurityPolicyOverride != null && !contentSecurityPolicyOverride.isBlank()) {
+            return contentSecurityPolicyOverride;
+        }
+
+        String idp = this.identityProviderOrigin();
+        return "default-src 'self'; "
+                + "script-src 'self'; "
+                + "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                + "font-src 'self' https://fonts.gstatic.com data:; "
+                + "img-src 'self' data: https://www.gravatar.com; "
+                + "connect-src 'self'" + idp + "; "
+                + "frame-src 'self'" + idp + "; "
+                + "form-action 'self'" + idp + "; "
+                + "frame-ancestors 'none'; "
+                + "base-uri 'self'; "
+                + "object-src 'none'";
+    }
+
+    /**
+     * Returns the identity provider's origin as a CSP source, prefixed with a space, or an empty
+     * string when no issuer is configured (api-key and none modes).
+     *
+     * @return {@code " https://idp.example"} or {@code ""}
+     */
+    private String identityProviderOrigin() {
+        if (issuerUriForCsp == null || issuerUriForCsp.isBlank()) {
+            return "";
+        }
+        try {
+            java.net.URI uri = java.net.URI.create(issuerUriForCsp.trim());
+            if (uri.getScheme() == null || uri.getHost() == null) {
+                return "";
+            }
+            String origin = uri.getScheme() + "://" + uri.getHost();
+            return uri.getPort() > -1 ? " " + origin + ":" + uri.getPort() : " " + origin;
+        } catch (IllegalArgumentException e) {
+            log.warn("auth.issuer-uri is not a valid URI, omitting it from the Content-Security-Policy");
+            return "";
+        }
     }
 }
