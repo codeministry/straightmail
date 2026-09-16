@@ -84,9 +84,19 @@ If you're upgrading straightmail from an older version, check this migration gui
 | Database         | not implemented                         | optional — API-only mode needs no database                         |
 | File templates   | mount volume or baked into custom image | mount volume + `TEMPLATES_FILE_BASE_PATH: /templates`              |
 | Tenant config    | implicit (single tenant)                | declare via `tenants.config` (required without `database` profile) |
+| Java runtime     | 21 (Temurin)                            | **25** — only relevant if you run the JAR yourself                 |
+| FreeMarker       | unrestricted                            | **sandboxed** — `?new` and `?api` are rejected                     |
+| Template paths   | resolved as given                       | confined to the tenant directory — `../` escapes return `404`      |
+| Tenant read API  | —                                       | `GET /v1/tenants` and `/v1/tenants/{slug}` require `ROLE_ADMIN`    |
+| Actuator         | framework default                       | only `health`; widen via `MANAGEMENT_ENDPOINTS`                    |
+| Security headers | none beyond Spring defaults             | CSP, `Referrer-Policy`, HSTS on every filter chain                 |
 
 Your existing `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_ENABLE_TLS`,
 `SMTP_ENABLE_SSL`, and `DEFAULT_SENDER` values carry over unchanged.
+
+Everything below the runtime row can break a working 0.4.0 setup. Read
+[Sandboxed template rendering](#sandboxed-template-rendering) and
+[Security defaults in 0.5.0](#security-defaults-in-050) before you upgrade.
 
 ---
 
@@ -218,6 +228,45 @@ templates/
 The subdirectory name must match your tenant ID (e.g. `default` for `TENANTS_CONFIG_0_ID: default`).
 Subdirectories within the tenant folder are supported — `default/emails/welcome.ftl` gets the template ID `emails/welcome`.
 
+**⚠️ Breaking change — template IDs cannot leave the tenant directory:** a `templateId` that resolves
+outside its own tenant folder is rejected with `404`, both in the URL and in the JSON body of
+`/v1/render` and `/v1/email`. If a 0.4.0 setup addressed templates through a relative path, flatten
+those paths into the tenant folder. A `../` that normalises back inside the same tenant still resolves.
+
+**`_plain.ftl` is now optional.** A template without its plain-text variant renders and sends as
+HTML only; the `plain` field of the render result stays `null`. In 0.4.0 the missing file was an error.
+
+---
+
+### Sandboxed template rendering
+
+**⚠️ Breaking change — this one fails at render time, not at startup.** Tenants author their own
+templates, so FreeMarker now runs with `TemplateClassResolver.ALLOWS_NOTHING_RESOLVER` and the
+`?api` built-in disabled. Two things stop working:
+
+| Built-in | 0.4.0                                   | 0.5.0                    |
+|----------|-----------------------------------------|--------------------------|
+| `?new`   | instantiated any class on the classpath | rejected for every class |
+| `?api`   | exposed the underlying Java API         | disabled                 |
+
+A template that still uses them fails the request with `500` and logs:
+
+```
+freemarker.core._MiscTemplateException: Instantiating freemarker.template.utility.Execute
+is not allowed in the template for security reasons.
+```
+
+Check your templates before upgrading:
+
+```bash
+rg -n '\?new|\?api' templates/
+```
+
+The background: `?new` could instantiate `freemarker.template.utility.Execute`, which runs OS
+commands — reachable by any caller holding a per-tenant API key, and enough to read `ENCRYPTION_KEY`
+out of the process environment. There is no opt-out flag, and there is deliberately no config to
+re-enable it. Templates that need Java behaviour must get it from the model passed into the render.
+
 ---
 
 ### Configuring tenants
@@ -248,9 +297,48 @@ SMTP credentials are set globally via `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SM
 > With the `database` profile active, `TenantReconciliationService` provisions the `default` tenant
 > automatically — `tenants.config` is then optional and only needed to pre-provision additional tenants.
 
+---
+
+### Security defaults in 0.5.0
+
+Four defaults changed in ways an existing integration can notice.
+
+**Tenant reads are admin-only.** `GET /v1/tenants` and `GET /v1/tenants/{slug}` now answer `403`
+unless the caller holds `ROLE_ADMIN`. In OIDC mode that role comes from `realm_access.roles`, so the
+Admin UI's tenant pages stay empty until your identity provider actually issues it. In API-key mode
+the global `API_KEY` counts as admin while a per-tenant key does not. `GET /v1/tenants/me` is
+unchanged and still returns the caller's own tenants — scripts that only needed their own tenant
+should move to it.
+
+**Actuator exposes `health` only.** `/actuator/info`, `/actuator/metrics` and everything else on
+`:50004` answer `404`. Set `MANAGEMENT_ENDPOINTS` to a comma-separated list to widen it again — but
+note the management port carries no authentication of its own, so it does not belong on a public interface.
+
+**Every response carries security headers.** All three filter chains send a Content-Security-Policy,
+`Referrer-Policy: same-origin` and HSTS. The policy is derived from the deployment: the configured
+`auth.issuer-uri` is added to `connect-src`, `frame-src` and `form-action`. If your identity provider,
+CDN or asset host lives somewhere else, replace the policy wholesale:
+
+```yaml
+environment:
+  SECURITY_CONTENT_SECURITY_POLICY: "default-src 'self'; script-src 'self'; connect-src 'self' https://idp.example.com"
+```
+
+`script-src` is strict — the Admin UI ships without `unsafe-eval` and runs NGXS in its
+CSP-compatible mode. Weakening it defeats the reason the header is there.
+
+**HSTS behind a TLS terminator.** `server.forward-headers-strategy` is set to `framework`, so Spring
+Security recognises HTTPS from the `X-Forwarded-*` headers your proxy sends. Without a TLS terminator
+in front, HSTS is not emitted at all.
+
+For the rest of the deployment hardening — profiles, credentials, port exposure — see
+[`docker/README.md`](docker/README.md).
+
 </details>
 
 ### Local Development
+
+**Prerequisites:** JDK 25 (Temurin), Node.js 22, Docker. The Gradle wrapper (9.7.1) is in the repo.
 
 **One-time setup — backend local config:**
 
@@ -295,6 +383,9 @@ The `docker/` directory contains four ready-to-use Compose stacks:
 | `apikey-sqlite.yml` | API-Key         | SQLite     | File + Database |
 | `oidc-sqlite.yml`   | OIDC / Keycloak | SQLite     | File + Database |
 | `oidc-postgres.yml` | OIDC / Keycloak | PostgreSQL | File + Database |
+
+All four stacks publish their ports on `127.0.0.1` and ship development credentials. They are meant
+for local work only — [`docker/README.md`](docker/README.md) lists what a real deployment has to change.
 
 **Prerequisite:** Build the backend JAR first:
 
@@ -408,6 +499,20 @@ Key environment variables:
 | `JWT_TENANT_IDS_CLAIM` | —       | JWT claim that contains a list of accessible tenant IDs                    |
 | `API_KEY`              | —       | Global API key (SHA-256 hash) used when the `database` profile is inactive |
 
+**Roles.** Tenant administration requires `ROLE_ADMIN`: every write in `/v1/tenants`, plus the reads
+`GET /v1/tenants` and `GET /v1/tenants/{slug}`. In OIDC mode the role must appear in the token's
+`realm_access.roles` — an otherwise valid token without it gets `403` and the Admin UI's tenant pages
+stay empty. In API-key mode the global `API_KEY` is admin, a per-tenant key is not. `GET /v1/tenants/me`
+is open to any authenticated caller and returns only their own tenants.
+
+Deployment-level settings:
+
+| Variable                           | Default  | Description                                                                    |
+|------------------------------------|----------|--------------------------------------------------------------------------------|
+| `ENCRYPTION_KEY`                   | —        | **Required.** AES-256 key, Base64-encoded (`openssl rand -base64 32`). A value that is not valid Base64 aborts startup |
+| `MANAGEMENT_ENDPOINTS`             | `health` | Comma-separated actuator endpoints exposed on `:50004`                         |
+| `SECURITY_CONTENT_SECURITY_POLICY` | derived  | Replaces the generated CSP wholesale; the default adds `auth.issuer-uri` to `connect-src`, `frame-src` and `form-action` |
+
 ## Operation Modes (Spring Profiles)
 
 The backend behaviour is controlled by Spring profiles set via `SPRING_PROFILES_ACTIVE`:
@@ -445,14 +550,14 @@ When running with the `database` profile, straightmail is fully multi-tenant:
 
 ## Ports
 
-| Service     | Port(s)     |
-|-------------|-------------|
-| Backend API | 50003       |
-| Management  | 50004       |
-| Frontend    | 4200        |
-| PostgreSQL  | 5432        |
-| Mailpit     | 1025 / 8025 |
-| pgAdmin     | 5050        |
+| Service     | Port(s)     | Note                                                                          |
+|-------------|-------------|-------------------------------------------------------------------------------|
+| Backend API | 50003       | serves the API and the bundled Admin UI                                       |
+| Management  | 50004       | actuator, `health` only by default, **no authentication** — keep it internal  |
+| Frontend    | 4200        | dev server only                                                               |
+| PostgreSQL  | 5432        |                                                                               |
+| Mailpit     | 1025 / 8025 |                                                                               |
+| pgAdmin     | 5050        |                                                                               |
 
 ## encircle360 OSS Matrix Channel
 

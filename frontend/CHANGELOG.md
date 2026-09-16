@@ -5,7 +5,7 @@ All notable changes to the straightmail client will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [0.5.0] - 2026-04-08
+## [0.5.0] - 2026-09-17
 
 ### Added
 
@@ -37,11 +37,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Frontend serving and auth configuration consolidated in Docker Compose setups
 - Storage keys updated for NGXS persistence plugin compatibility
 - Font sizes standardized to `rem` units across all component stylesheets
+- Angular upgraded to 22.1.x, Node.js to 22
+- NGXS runs with `compatibility.strictContentSecurityPolicy` so the app works under the backend's
+  `script-src 'self'` policy without `unsafe-eval`
+- Shared form fields bound via `[formControl]` instead of `ngModel`
+- i18n bundles cover the API-key login page and its error messages
 
 ### Fixed
 
 - `mockTenants` E2E helper now mocks `/v1/tenants/me` (the actual `LoadTenants` endpoint) instead of `/v1/tenants`
 - Playwright `autoAuth` fixture seeds tenant with `editable: true` so "New Template" / "New Tenant" buttons render
+- Production builds shipped the development environment: `angular.json` had no `fileReplacements`, so
+  every production bundle carried the `http://localhost:50003/api` fallback, `http://localhost:8090` as
+  the OIDC issuer fallback and `logLevel 1`, which logged the auth flow to the browser console
+- Interceptors computed their base path with `new URL(environment.apiUrl)` and no base argument, which
+  throws for the relative `/api` the backend returns by default — it only worked because the dev
+  environment's absolute fallback was shipping
+- Bearer token and API key are scoped by origin as well as path; a request to a foreign host whose path
+  happens to start with the API base no longer receives credentials
+
+### Removed
+
+- `public/env.js` runtime-injection shim, left over from the standalone frontend image; the Admin UI is
+  served by the backend and reads its configuration from `/api/v1/info`
 
 ## [0.2.0] - 2026-03-16
 

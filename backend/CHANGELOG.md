@@ -5,7 +5,27 @@ All notable changes to the straightmail backend will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [0.5.0] - 2026-05-29
+## [0.5.0] - 2026-09-17
+
+### Security
+
+- FreeMarker locked down in `FreemarkerSecurityConfig`: `TemplateClassResolver.ALLOWS_NOTHING_RESOLVER`
+  plus the `?api` built-in disabled, both set once on the shared `Configuration` singleton. `?new` could
+  previously instantiate `freemarker.template.utility.Execute` and run OS commands, reachable by any
+  caller holding a per-tenant API key via `/v1/email/inline` or a stored template — **breaking for
+  templates using `?new` or `?api`**
+- `FileTemplateSourceProvider` and `AbstractTemplateLoader` normalise template names and confine them
+  to the tenant directory; `../other-tenant/welcome` no longer resolves, over the URL or through the
+  `templateId` in the JSON body of `/v1/render` and `/v1/email`
+- `TenantReadController.list()` and `get(slug)` require `ROLE_ADMIN`; both had no authorization at all
+  and exposed every tenant's `smtpHost`, `smtpPort`, `smtpUser`, `smtpSender`, `gitRepoUrl` and
+  `hasApiKey`. `/v1/tenants/me` stays open to any authenticated caller
+- `SecurityConfig` sends a Content-Security-Policy, `Referrer-Policy: same-origin` and HSTS on all
+  three filter chains; the policy is derived from `auth.issuer-uri` and replaceable via
+  `security.content-security-policy`
+- `server.forward-headers-strategy=framework` so HSTS is emitted behind a TLS terminator
+- `management.endpoints.web.exposure.include` set explicitly to `${MANAGEMENT_ENDPOINTS:health}`
+- `mavenCentral` ordered before `mavenLocal` in `build.gradle`
 
 ### Added
 
@@ -35,6 +55,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Package structure reorganized: `template/`, `tenant/`, `mail/`, `security/` sub-packages
 - `@Autowired` field injection replaced by constructor injection throughout
 - `this.` prefix applied consistently to all same-class method calls
+- Toolchain: Java 21 → 25, Spring Boot 4.1.1, Gradle wrapper 9.7.1
+- A missing `_plain.ftl` is no longer an error; the template renders and sends as HTML only
+- Send lifecycle logged at INFO
+
+### Fixed
+
+- PostgreSQL could not start: `tenants.active`, `smtp_tls` and `smtp_ssl` were created as `integer` in
+  changeset `0002`, which PostgreSQL rejects when Hibernate binds a boolean, so the first insert from
+  `TenantReconciliationService` failed at startup. Changeset `0009` converts the three columns to
+  `boolean` and is marked as ran on SQLite, leaving existing SQLite installations untouched
 
 ### Removed
 

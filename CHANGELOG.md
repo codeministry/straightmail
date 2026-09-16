@@ -7,9 +7,25 @@ For component-specific changes see [`backend/CHANGELOG.md`](backend/CHANGELOG.md
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [0.5.0] - 2026-05-29
+## [0.5.0] - 2026-09-17
 
 For component-specific changes see [`backend/CHANGELOG.md`](backend/CHANGELOG.md) and [`frontend/CHANGELOG.md`](frontend/CHANGELOG.md).
+
+### Security
+
+- FreeMarker renders sandboxed: `?new` is rejected for every class and `?api` is disabled. Previously
+  `?new` could instantiate `freemarker.template.utility.Execute` and run OS commands, reachable by any
+  caller holding a per-tenant API key — **breaking for templates that use either built-in**
+- Template IDs are normalised and confined to their tenant directory; `../` escapes no longer read
+  another tenant's templates, over the URL or through the JSON body of `/v1/render` and `/v1/email`
+- `GET /v1/tenants` and `GET /v1/tenants/{slug}` require `ROLE_ADMIN` — they previously let any
+  authenticated caller enumerate every tenant's mail relay configuration. `/v1/tenants/me` is unchanged
+- Content-Security-Policy, `Referrer-Policy` and HSTS on all three filter chains, with
+  `server.forward-headers-strategy=framework` so HSTS survives a TLS terminator
+- Actuator exposure set explicitly to `health` (`MANAGEMENT_ENDPOINTS` widens it again)
+- Production frontend bundles no longer ship the development environment; bearer tokens and API keys
+  are scoped by origin as well as path
+- `mavenCentral` before `mavenLocal` so a stale local artifact cannot win a build
 
 ### Added
 
@@ -27,6 +43,19 @@ For component-specific changes see [`backend/CHANGELOG.md`](backend/CHANGELOG.md
 - Added `if: github.ref == 'refs/heads/main'` guard to `backend.yml` docker job (was pushing on PRs)
 - SQLite replaces PostgreSQL as default database backend (Liquibase migrations updated)
 - Keycloak hostname handling refactored; JWK/issuer URLs split for OIDC setups
+- Toolchain: Java 21 → 25, Spring Boot 4.1.1, Gradle 9.7.1, Angular 22.1.x, Node.js 22
+- Compose stacks bind their ports to `127.0.0.1` instead of `0.0.0.0`; `docker/README.md` states what
+  a real deployment has to change
+- CI repaired and extended: dependency and container scanning, the image cleanup workflow moved
+  in-repo, and all seven workflows documented
+
+### Fixed
+
+- The PostgreSQL stack could not start: `tenants.active`, `smtp_tls` and `smtp_ssl` were created as
+  `integer`, which PostgreSQL rejects when Hibernate binds a boolean, so tenant reconciliation failed
+  on the first insert. Changeset `0009` converts the three columns; SQLite installations are unaffected
+- Three Compose stacks shipped `ENCRYPTION_KEY: "CHANGE_ME_GENERATE_RANDOM_KEY"`, which is not valid
+  Base64 and put the container in a crash loop on first start
 
 ## [0.4.0] - 2026-05-21
 

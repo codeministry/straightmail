@@ -7,9 +7,9 @@ an imported realm), Mailpit, and the app are ready to use immediately.
 ## These stacks are for local development
 
 All four stacks bind their ports to `127.0.0.1`, ship dev credentials (`admin/admin` for
-Keycloak, `straightmail/straightmail` for Postgres, `dev-api-key-change-me` for the API key)
-and run without the `production` Spring profile, so Swagger UI and `/v3/api-docs` are reachable.
-That is intended here and unsafe anywhere else.
+Keycloak, `straightmail/straightmail` for Postgres, `dev-api-key-change-me` for the API key,
+plus a checked-in `ENCRYPTION_KEY` per stack) and run without the `production` Spring profile,
+so Swagger UI and `/v3/api-docs` are reachable. That is intended here and unsafe anywhere else.
 
 For a real deployment, start from these files but change at least the following:
 
@@ -19,6 +19,9 @@ For a real deployment, start from these files but change at least the following:
 - do not publish the management port `50004`; it carries no authentication of its own
 - put a TLS terminator in front, otherwise HSTS is not sent and the `/api/v1/info` response that
   configures the client's OIDC authority travels in clear text
+
+Upgrading an existing installation rather than starting fresh? The migration guide in the
+[root README](../README.md#migrating-from-040) lists what changed between 0.4.0 and 0.5.0.
 
 ---
 
