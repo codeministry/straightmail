@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "master", "main" ]
 
-# One publish at a time for ghcr.io/<repo>/backend, so a fast follow-up push cannot overtake
+# One publish at a time for ghcr.io/<repo>/monorepo, so a fast follow-up push cannot overtake
 # the run before it and leave an older image behind :latest.
 concurrency:
   group: monorepo-image-${{ github.ref }}
@@ -128,7 +128,14 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend
+          # /monorepo, nicht /backend: hier wird das KOMBINIERTE Artefakt gepusht,
+          # Spring Boot samt Angular (siehe Job "Backend Build & Test", der das
+          # combined-jar hochlaedt, und den Download weiter oben). Der Pfad hiess bis
+          # 2026-09-17 /backend und beschrieb damit den Quellordner statt des Inhalts —
+          # das hat beim Umstellen des Clusters fuer echte Verwirrung gesorgt.
+          # Backend-only liegt weiterhin in /backend (backend.yml) und im Root-Pfad
+          # (release.yml mit SKIP_FRONTEND_BUILD).
+          images: ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/monorepo
           tags: |
             type=raw,value=latest
             type=sha,prefix=,format=short
@@ -144,8 +151,10 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend:buildcache,mode=max
+          # Eigener Cache-Tag. Vorher teilte sich dieser Lauf den buildcache mit
+          # backend.yml, obwohl beide unterschiedliche Artefakte bauen.
+          cache-from: type=registry,ref=ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/monorepo:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/monorepo:buildcache,mode=max
 
       - name: Scan image for known vulnerabilities
         # 0.28.0 aufloest GitHub nicht mehr, das Tag existiert nicht mehr im Action-Repo.
@@ -154,7 +163,7 @@ jobs:
         # v0.36.0 kennt alle fuenf hier benutzten Eingaben unveraendert.
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend@${{ steps.build.outputs.digest }}
+          image-ref: ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/monorepo@${{ steps.build.outputs.digest }}
           format: sarif
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
@@ -169,6 +178,6 @@ jobs:
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend
+          subject-name: ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/monorepo
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true

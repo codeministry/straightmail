@@ -18,7 +18,8 @@ name: Cleanup Old Packages
 #
 # Two things in this repo depend on the exclusions below:
 #   * backend.yml and monorepo.yml use a registry build cache
-#     (ghcr.io/codeministry/straightmail/backend:buildcache). Without protecting that tag,
+#     (…/straightmail/backend:buildcache und …/straightmail/monorepo:buildcache).
+#     Without protecting those tags,
 #     every build after the first one is a cold build.
 #   * release.yml uses actions/attest-build-provenance with subject-name, which creates
 #     sha256-<digest> referrer tags. delete-orphaned-images removes those once the parent
@@ -44,7 +45,9 @@ permissions:
 
 env:
   # GHCR package names without the owner prefix; nested names are fine.
-  PACKAGES: straightmail,straightmail/backend
+  # straightmail/monorepo kam am 2026-09-17 dazu: monorepo.yml pusht das kombinierte
+  # Image seither dorthin statt nach /backend. Fehlt es hier, waechst es unbegrenzt.
+  PACKAGES: straightmail,straightmail/backend,straightmail/monorepo
   # Number of newest tagged images to keep. Never set this to 0 — the action reads 0 as
   # "delete every tagged image", which would empty the package.
   KEEP_TAGGED: '15'
@@ -54,7 +57,7 @@ env:
 
 jobs:
   images:
-    name: Images — straightmail + backend
+    name: Images — straightmail + backend + monorepo
     runs-on: ubuntu-latest
     steps:
       - name: Compose guarded action inputs
