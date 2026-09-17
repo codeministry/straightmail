@@ -19,6 +19,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -27,6 +28,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +74,14 @@ public class SecurityConfig {
     @Value("${auth.issuer-uri:}")
     private String issuerUriForCsp;
 
+    /**
+     * Comma-separated list of accepted {@code aud} values. A custom {@link JwtDecoder} bean replaces
+     * Boot's resource-server autoconfiguration, so this property has to be applied by hand — without
+     * it any token from the same realm, including one issued to a different client, would be accepted.
+     */
+    @Value("${spring.security.oauth2.resourceserver.jwt.audiences:}")
+    private String expectedAudiences;
+
     /** Full Content-Security-Policy override; when blank the policy is derived from the deployment. */
     @Value("${security.content-security-policy:}")
     private String contentSecurityPolicyOverride;
@@ -94,6 +104,9 @@ public class SecurityConfig {
      *       via {@code auth.issuer-uri}, which must be reachable from the backend at startup.</li>
      * </ul>
      *
+     * <p>Both modes validate {@code iss}, {@code exp}, {@code nbf} and {@code aud}; see
+     * {@link #tokenValidator(String)}.
+     *
      * @param issuerUri the public OIDC issuer URI; used for {@code iss} claim validation
      * @param jwkUri    optional internal JWK set URI; when set, OIDC discovery is skipped
      * @return a {@link JwtDecoder} configured for the given issuer
@@ -105,14 +118,53 @@ public class SecurityConfig {
             @Value("${auth.jwk-uri:}") String jwkUri
     ) {
 
-        if (StringUtils.hasText(jwkUri)) {
-            NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkUri).build();
-            OAuth2TokenValidator<Jwt> validators = JwtValidators.createDefaultWithIssuer(issuerUri);
-            decoder.setJwtValidator(validators);
-            return decoder;
+        NimbusJwtDecoder decoder = StringUtils.hasText(jwkUri)
+                ? NimbusJwtDecoder.withJwkSetUri(jwkUri).build()
+                : NimbusJwtDecoder.withIssuerLocation(issuerUri).build();
+
+        decoder.setJwtValidator(this.tokenValidator(issuerUri));
+        return decoder;
+    }
+
+    /**
+     * Builds the token validator: the framework defaults ({@code exp}, {@code nbf}, {@code iss})
+     * plus an {@code aud} check against the configured audiences.
+     *
+     * <p>When no audience is configured the audience check is skipped, which keeps deployments that
+     * deliberately run without one working.
+     *
+     * <p>Package-private so the audience rule can be asserted directly, without a live issuer.
+     *
+     * @param issuerUri the public issuer the {@code iss} claim must match
+     * @return the combined validator
+     */
+    OAuth2TokenValidator<Jwt> tokenValidator(String issuerUri) {
+        OAuth2TokenValidator<Jwt> defaults = JwtValidators.createDefaultWithIssuer(issuerUri);
+
+        List<String> audiences = this.configuredAudiences();
+        if (audiences.isEmpty()) {
+            log.warn("No JWT audience configured — tokens issued to any client of this realm will be accepted");
+            return defaults;
         }
 
-        return JwtDecoders.fromIssuerLocation(issuerUri);
+        OAuth2TokenValidator<Jwt> audience = new JwtClaimValidator<List<String>>(
+                JwtClaimNames.AUD, aud -> aud != null && !Collections.disjoint(aud, audiences));
+        return new DelegatingOAuth2TokenValidator<>(defaults, audience);
+    }
+
+    /**
+     * Splits the configured audience property into a list, dropping blank entries.
+     *
+     * @return the accepted {@code aud} values, empty when none are configured
+     */
+    private List<String> configuredAudiences() {
+        if (expectedAudiences == null || expectedAudiences.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(expectedAudiences.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
     }
 
     /**

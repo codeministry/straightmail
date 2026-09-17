@@ -1,4 +1,4 @@
-name: Backend CI/CD
+name: Backend CI
 
 on:
   push:
@@ -14,6 +14,11 @@ on:
 
 permissions:
   contents: read
+
+# Build-and-test gate only. The image for ghcr.io/<repo>/backend is published solely by
+# monorepo.yml, which builds the JAR with the Angular console embedded; publishing the
+# backend-only JAR under the same tags from here meant the image nondeterministically carried
+# either the fresh console or a stale one.
 
 jobs:
   build:
@@ -43,13 +48,6 @@ jobs:
         run: ./gradlew build -x test
         env:
           SKIP_FRONTEND_BUILD: "true"
-
-      - name: Upload JAR artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: jar-file
-          path: backend/build/libs/*.jar
-          retention-days: 1
 
   test:
     name: Run Tests
@@ -88,89 +86,3 @@ jobs:
             backend/build/reports/tests/test/
             backend/build/reports/jacoco/
           retention-days: 3
-
-  docker:
-    name: Build & Push Docker Image
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-      attestations: write
-      security-events: write
-    runs-on: ubuntu-latest
-    needs: [ build, test ]
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download JAR artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: jar-file
-          path: backend/build/libs/
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64,amd64
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Convert repository name to lowercase
-        id: repo
-        run: echo "repo_lowercase=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend
-          tags: |
-            type=raw,value=latest
-            type=sha,prefix=,format=short
-
-      - name: Build and push
-        id: build
-        uses: docker/build-push-action@v6
-        with:
-          provenance: true
-          sbom: true
-          context: ./backend
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend:buildcache,mode=max
-
-      - name: Scan image for known vulnerabilities
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend@${{ steps.build.outputs.digest }}
-          format: sarif
-          output: trivy-results.sarif
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-
-      - name: Upload scan results
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: trivy-results.sarif
-          category: container-image
-
-      - name: Attest build provenance
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend
-          subject-digest: ${{ steps.build.outputs.digest }}
-          push-to-registry: true

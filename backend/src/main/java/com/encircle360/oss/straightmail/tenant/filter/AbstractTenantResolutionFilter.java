@@ -4,6 +4,7 @@ import com.encircle360.oss.straightmail.config.TenantProperties;
 import com.encircle360.oss.straightmail.repository.TenantRepository;
 import com.encircle360.oss.straightmail.tenant.TenantContext;
 import com.encircle360.oss.straightmail.tenant.TenantValidation;
+import com.encircle360.oss.straightmail.util.ApiPaths;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +59,8 @@ public abstract class AbstractTenantResolutionFilter extends OncePerRequestFilte
      * <ul>
      *   <li>Actuator endpoints (paths starting with {@code /actuator})</li>
      *   <li>The info endpoint (paths matching {@code v1/info})</li>
-     *   <li>Paths outside the configured API prefix</li>
+     *   <li>Paths outside the configured API prefix, judged on segment boundaries so that the
+     *       SPA route {@code /api-key-login} is not mistaken for an API path (see {@link ApiPaths})</li>
      *   <li>{@code GET /v1/tenants} and {@code GET /v1/tenants/me}: accessible without a tenant header
      *       to support the initial login / tenant-selection flow</li>
      * </ul>
@@ -70,7 +72,7 @@ public abstract class AbstractTenantResolutionFilter extends OncePerRequestFilte
         String path = request.getRequestURI();
         if (path.startsWith("/actuator")) return true;
         if (path.matches(".*/v1/info$")) return true;
-        if (!apiPrefix.isBlank() && !path.startsWith(apiPrefix)) return true;
+        if (!ApiPaths.isApiPath(path, apiPrefix)) return true;
         if (!"GET".equalsIgnoreCase(request.getMethod())) return false;
         // Tenant list endpoints accessible without X-Tenant-ID (for login flow)
         return path.matches(".*/v1/tenants/?$") || path.matches(".*/v1/tenants/me$");

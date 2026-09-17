@@ -23,6 +23,8 @@ import { ApiService, GitSyncStatusDTO } from '../../../core/services/api.service
 import { GitSyncCardComponent } from '../../dashboard/git-sync-card/git-sync-card.component';
 import { CanDeactivateComponent } from '../../../core/guards/can-deactivate-form.guard';
 import { ConfirmService } from '../../../core/services/confirm.service';
+import { ShowToast } from '../../../store/toast/toast.actions';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-tenant-form',
@@ -247,14 +249,21 @@ export class TenantFormComponent implements OnInit, CanDeactivateComponent {
     });
   }
 
-  /** Triggers a manual git sync for the current tenant and updates the status signal. */
+  /**
+   * Triggers a manual git sync for the current tenant and updates the status signal.
+   * Releases the button and shows a toast whether the sync succeeds or fails.
+   */
   onGitSync(): void {
     this.syncingTenant.set(true);
-    this.apiService.triggerGitSync(this.tenant!.slug).subscribe({
-      next: (updated) => this.tenantSyncStatus.set(updated),
-      error: () => {},
-      complete: () => this.syncingTenant.set(false),
-    });
+    // finalize, not complete: RxJS never calls complete after an error, which used to leave the
+    // spinner running and the button disabled with nothing to explain it.
+    this.apiService
+      .triggerGitSync(this.tenant!.slug)
+      .pipe(finalize(() => this.syncingTenant.set(false)))
+      .subscribe({
+        next: (updated) => this.tenantSyncStatus.set(updated),
+        error: () => this.store.dispatch(new ShowToast('dashboard.sync_error', 'error')),
+      });
   }
 
   /**

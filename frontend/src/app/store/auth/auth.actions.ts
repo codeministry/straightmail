@@ -8,11 +8,6 @@ export class Login {
   static readonly type = '[Auth] Login';
 }
 
-/** Dispatched after the OIDC callback has been processed to hydrate the auth state. */
-export class LoginComplete {
-  static readonly type = '[Auth] Login Complete';
-}
-
 /** Terminates the OIDC session and clears all stored auth state. */
 export class Logout {
   static readonly type = '[Auth] Logout';

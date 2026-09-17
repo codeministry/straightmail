@@ -1,9 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
-import { of } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
-import { CheckAuth, Login, LoginComplete, Logout, SetUserData } from './auth.actions';
+import { tap } from 'rxjs/operators';
+import { CheckAuth, Login, Logout, SetUserData } from './auth.actions';
 import { TenantActions } from '../tenant/tenant.actions';
 
 /** Shape of the data persisted in the NGXS {@link AuthState}. */
@@ -12,8 +11,6 @@ export interface AuthStateModel {
   isAuthenticated: boolean;
   /** Raw user-data claims object returned by the OIDC provider. */
   userData: any;
-  /** Current JWT access token, or {@code null} when not authenticated. */
-  accessToken: string | null;
   /** Roles extracted from the JWT {@code realm_access.roles} claim or user-data claims. */
   roles: string[];
 }
@@ -21,17 +18,21 @@ export interface AuthStateModel {
 /**
  * NGXS state for OIDC/JWT authentication.
  *
- * Manages the authentication lifecycle: session check on startup, OIDC login redirect, silent
- * token refresh on 401, and logout. Roles are extracted from the JWT payload's
- * {@code realm_access.roles} claim (Keycloak convention) with fallbacks to user-data claims.
- * State is persisted in {@code LOCAL_STORAGE} via the NGXS persist plugin.
+ * Manages the authentication lifecycle: session check on startup, OIDC login redirect and logout.
+ * Roles are extracted from the JWT payload's {@code realm_access.roles} claim (Keycloak convention)
+ * with fallbacks to user-data claims. State is persisted in {@code LOCAL_STORAGE} via the NGXS
+ * persist plugin.
+ *
+ * <p>The access token itself is deliberately not kept here. Silent renew replaces it in the
+ * background, so a stored copy goes stale within minutes and would have to be refreshed on every
+ * request; the OIDC library is the single source of truth and {@code authInterceptor} reads it
+ * from there.
  */
 @State<AuthStateModel>({
   name: 'auth',
   defaults: {
     isAuthenticated: false,
     userData: null,
-    accessToken: null,
     roles: [],
   },
 })
@@ -51,12 +52,6 @@ export class AuthState {
     return state.userData;
   }
 
-  /** Selector that emits the current JWT access token, or {@code null}. */
-  @Selector()
-  static accessToken(state: AuthStateModel): string | null {
-    return state?.accessToken ?? null;
-  }
-
   /** Selector that emits the list of roles extracted from the JWT or user-data claims. */
   @Selector()
   static roles(state: AuthStateModel): string[] {
@@ -66,16 +61,6 @@ export class AuthState {
   @Action(CheckAuth)
   checkAuth(ctx: StateContext<AuthStateModel>) {
     return this.updateAuthState(ctx);
-  }
-
-  @Action(LoginComplete)
-  loginComplete(ctx: StateContext<AuthStateModel>) {
-    return this.updateAuthState(ctx).pipe(
-      switchMap(() => {
-        const { isAuthenticated } = ctx.getState();
-        return isAuthenticated ? ctx.dispatch(new TenantActions.LoadTenants()) : of(null);
-      }),
-    );
   }
 
   @Action(Login)
@@ -90,7 +75,6 @@ export class AuthState {
         ctx.patchState({
           isAuthenticated: false,
           userData: null,
-          accessToken: null,
           roles: [],
         });
         ctx.dispatch(new TenantActions.ClearTenants());
@@ -125,7 +109,6 @@ export class AuthState {
         ctx.patchState({
           isAuthenticated,
           userData,
-          accessToken,
           roles,
         });
       }),

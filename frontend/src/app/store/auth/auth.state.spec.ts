@@ -1,13 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { NgxsModule, Store } from '@ngxs/store';
 import { AuthState, AuthStateModel } from './auth.state';
-import { CheckAuth, Login, LoginComplete, Logout, SetUserData } from './auth.actions';
+import { CheckAuth, Login, Logout, SetUserData } from './auth.actions';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TenantState } from '../tenant/tenant.state';
-import { environment } from '../../../environments/environment';
 
 describe('AuthState', () => {
   let store: Store;
@@ -42,7 +41,6 @@ describe('AuthState', () => {
     const state: AuthStateModel = store.selectSnapshot((state) => state.auth);
     expect(state.isAuthenticated).toBe(false);
     expect(state.userData).toBeNull();
-    expect(state.accessToken).toBeNull();
     expect(state.roles).toEqual([]);
   });
 
@@ -59,7 +57,19 @@ describe('AuthState', () => {
     const state = store.selectSnapshot((state) => state.auth);
     expect(state.isAuthenticated).toBe(true);
     expect(state.userData).toEqual({ name: 'Test User' });
-    expect(state.accessToken).toBe('token123');
+  });
+
+  it('should not keep a copy of the access token', () => {
+    // Silent renew replaces the token in the background, so a stored copy would go stale and
+    // every request would 401 before it refreshed. The OIDC library owns the token.
+    (oidcSecurityService.checkAuth as any).mockReturnValue(
+      of({ isAuthenticated: true, userData: {}, accessToken: 'token123' }),
+    );
+
+    store.dispatch(new CheckAuth());
+
+    const state = store.selectSnapshot((state) => state.auth);
+    expect('accessToken' in state).toBe(false);
   });
 
   it('should call authorize on login', () => {
@@ -74,50 +84,11 @@ describe('AuthState', () => {
     const auth = store.selectSnapshot((state) => state.auth);
     expect(auth.isAuthenticated).toBe(false);
     expect(auth.userData).toBeNull();
-    expect(auth.accessToken).toBeNull();
     expect(auth.roles).toEqual([]);
 
     const tenant = store.selectSnapshot((state) => state.tenant);
     expect(tenant.selectedTenantId).toBeNull();
     expect(tenant.tenants).toEqual([]);
-  });
-
-  it('should load tenants on LoginComplete when authenticated', () => {
-    const payload = { realm_access: { roles: ['USER'] } };
-    const encoded = btoa(JSON.stringify(payload));
-    const accessToken = `header.${encoded}.signature`;
-
-    (oidcSecurityService.checkAuth as any).mockReturnValue(
-      of({ isAuthenticated: true, userData: { name: 'New User' }, accessToken }),
-    );
-
-    store.dispatch(new LoginComplete());
-
-    const req = httpTesting.expectOne(`${environment.apiUrl}/v1/tenants/me`);
-    req.flush([
-      {
-        slug: 'acme',
-        displayName: 'Acme',
-        smtpTls: false,
-        smtpSsl: false,
-        hasApiKey: false,
-        active: true,
-      },
-    ]);
-
-    const tenant = store.selectSnapshot((state) => state.tenant);
-    expect(tenant.tenants).toHaveLength(1);
-    expect(tenant.selectedTenantId).toBe('acme');
-  });
-
-  it('should not load tenants on LoginComplete when not authenticated', () => {
-    (oidcSecurityService.checkAuth as any).mockReturnValue(
-      of({ isAuthenticated: false, userData: null, accessToken: null }),
-    );
-
-    store.dispatch(new LoginComplete());
-
-    httpTesting.expectNone(`${environment.apiUrl}/v1/tenants/me`);
   });
 
   it('should set userData via SetUserData action', () => {

@@ -139,7 +139,6 @@ export interface PageResponse<T> {
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
-  private readonly base = '/api';
   private readonly apiUrl = environment.apiUrl;
 
   /**
@@ -149,7 +148,7 @@ export class ApiService {
    * @returns An observable that completes when the email has been accepted by the backend.
    */
   sendEmail(req: SendEmailRequest): Observable<void> {
-    return this.http.post<void>(`${this.base}/v1/email`, req);
+    return this.http.post<void>(`${this.apiUrl}/v1/email`, req);
   }
 
   /**
@@ -159,7 +158,7 @@ export class ApiService {
    * @returns An observable that completes when the email has been accepted by the backend.
    */
   sendInlineEmail(req: SendInlineEmailRequest): Observable<void> {
-    return this.http.post<void>(`${this.base}/v1/email/inline`, req);
+    return this.http.post<void>(`${this.apiUrl}/v1/email/inline`, req);
   }
 
   /**
@@ -169,7 +168,7 @@ export class ApiService {
    * @returns An observable emitting the rendered HTML and plain-text content.
    */
   render(req: RenderRequest): Observable<RenderResponse> {
-    return this.http.post<RenderResponse>(`${this.base}/v1/render`, req);
+    return this.http.post<RenderResponse>(`${this.apiUrl}/v1/render`, req);
   }
 
   /**
@@ -179,7 +178,7 @@ export class ApiService {
    * @returns An observable emitting the template.
    */
   getTemplate(id: string): Observable<EmailTemplate> {
-    return this.http.get<EmailTemplate>(`${this.base}/v1/templates/${id}`);
+    return this.http.get<EmailTemplate>(`${this.apiUrl}/v1/templates/${id}`);
   }
 
   /**
@@ -194,7 +193,7 @@ export class ApiService {
   getTemplates(page = 0, size = 20, tags?: string[]): Observable<PageResponse<EmailTemplate>> {
     let params = new HttpParams().set('page', page).set('size', size);
     tags?.forEach((t) => (params = params.append('tag', t)));
-    return this.http.get<PageResponse<EmailTemplate>>(`${this.base}/v1/templates`, { params });
+    return this.http.get<PageResponse<EmailTemplate>>(`${this.apiUrl}/v1/templates`, { params });
   }
 
   /**
@@ -204,7 +203,7 @@ export class ApiService {
    * @returns An observable emitting the newly created template (with assigned ID).
    */
   createTemplate(template: EmailTemplate): Observable<EmailTemplate> {
-    return this.http.post<EmailTemplate>(`${this.base}/v1/templates`, template);
+    return this.http.post<EmailTemplate>(`${this.apiUrl}/v1/templates`, template);
   }
 
   /**
@@ -215,7 +214,7 @@ export class ApiService {
    * @returns An observable emitting the updated template.
    */
   updateTemplate(id: string, template: EmailTemplate): Observable<EmailTemplate> {
-    return this.http.put<EmailTemplate>(`${this.base}/v1/templates/${id}`, template);
+    return this.http.put<EmailTemplate>(`${this.apiUrl}/v1/templates/${id}`, template);
   }
 
   /**
@@ -225,7 +224,7 @@ export class ApiService {
    * @returns An observable that completes when the template has been deleted.
    */
   deleteTemplate(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/v1/templates/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/v1/templates/${id}`);
   }
 
   /**
@@ -236,7 +235,7 @@ export class ApiService {
    *          (e.g. backend running without the {@code database} profile).
    */
   getStatus(): Observable<StatusDTO> {
-    return this.http.get<StatusDTO>(`${this.base}/v1/status`);
+    return this.http.get<StatusDTO>(`${this.apiUrl}/v1/status`);
   }
 
   /**
@@ -246,7 +245,7 @@ export class ApiService {
    * @returns An observable emitting the updated {@link GitSyncStatusDTO} for the tenant.
    */
   triggerGitSync(tenantSlug: string): Observable<GitSyncStatusDTO> {
-    return this.http.post<GitSyncStatusDTO>(`${this.base}/v1/sync/git/${tenantSlug}`, null);
+    return this.http.post<GitSyncStatusDTO>(`${this.apiUrl}/v1/sync/git/${tenantSlug}`, null);
   }
 
   /**
@@ -255,7 +254,7 @@ export class ApiService {
    * @returns An observable emitting the raw HTTP response.
    */
   getInfo(): Observable<any> {
-    return this.http.get(`${this.base}/v1/info`, { observe: 'response' });
+    return this.http.get(`${this.apiUrl}/v1/info`, { observe: 'response' });
   }
 
   /**

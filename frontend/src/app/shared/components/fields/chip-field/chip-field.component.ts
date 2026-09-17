@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
@@ -42,13 +42,20 @@ export class ChipFieldComponent {
     return this.form().get(this.arrayName()) as FormArray;
   }
 
-  /** Reads the staging input value, appends it as a new chip, and clears the input. */
+  /**
+   * Reads the staging input value, appends it as a new chip, and clears the input.
+   *
+   * The chip carries the same validator as the staging input, so a malformed address stays
+   * invalid after it becomes a chip. The form is set to novalidate, so the browser's own
+   * type="email" check never runs.
+   */
   add(): void {
     const form = this.form();
     const inputName = this.inputName();
     const val = (form.get(inputName)?.value as string)?.trim();
     if (!val) return;
-    this.array.push(new FormControl(val));
+    const validators = this.inputType() === 'email' ? [Validators.email] : [];
+    this.array.push(new FormControl(val, validators));
     form.get(inputName)?.setValue('');
     form.markAsDirty();
   }

@@ -11,6 +11,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 
@@ -107,18 +108,61 @@ class SmtpSenderBuilderTest {
     }
 
     @Test
-    void coalesce_returnsFirstWhenNonBlank() {
-        assertEquals("a", SmtpSenderBuilder.coalesce("a", "b"));
+    void tenantWithOwnHost_neverInheritsGlobalCredentials() {
+        // A tenant relay is tenant-controlled: leaking the global username and password to it
+        // would hand over the credentials of every other tenant's mail path.
+        SmtpSenderBuilder.SmtpConfig globalWithCredentials =
+                new SmtpSenderBuilder.SmtpConfig("smtp.internal", 25, "global-user", "global-pass", false, false);
+        SmtpSenderBuilder.SmtpConfig tenantHostOnly =
+                new SmtpSenderBuilder.SmtpConfig("smtp.acme.com", null, null, null, false, false);
+
+        lenient().when(encryptionService.decrypt(isNull())).thenReturn(null);
+
+        JavaMailSenderImpl sender = (JavaMailSenderImpl) SmtpSenderBuilder.build(
+                tenantHostOnly, globalWithCredentials, encryptionService, "test");
+
+        assertEquals("smtp.acme.com", sender.getHost());
+        assertNull(sender.getUsername());
+        assertNull(sender.getPassword());
     }
 
     @Test
-    void coalesce_returnsSecondWhenFirstIsNull() {
-        assertEquals("b", SmtpSenderBuilder.coalesce(null, "b"));
+    void withoutAUsername_smtpAuthStaysOff() {
+        // JavaMail refuses to connect at all when auth is announced but no credentials exist,
+        // which broke sending to credential-less relays such as Mailpit.
+        SmtpSenderBuilder.SmtpConfig tenantNoCredentials =
+                new SmtpSenderBuilder.SmtpConfig("smtp.acme.com", 25, null, null, false, false);
+
+        lenient().when(encryptionService.decrypt(isNull())).thenReturn(null);
+
+        Properties props = propsFor(tenantNoCredentials);
+
+        assertEquals("false", props.get("mail.smtp.auth"));
     }
 
     @Test
-    void coalesce_returnsSecondWhenFirstIsBlank() {
-        assertEquals("b", SmtpSenderBuilder.coalesce("  ", "b"));
+    void withAUsername_smtpAuthIsAnnounced() {
+        SmtpSenderBuilder.SmtpConfig tenantWithUser =
+                new SmtpSenderBuilder.SmtpConfig("smtp.acme.com", 587, "user@acme.com", "enc", false, true);
+
+        lenient().when(encryptionService.decrypt("enc")).thenReturn("secret");
+
+        Properties props = propsFor(tenantWithUser);
+
+        assertEquals("true", props.get("mail.smtp.auth"));
+    }
+
+    @Test
+    void tenantWithoutPort_keepsJavaMailDefault() {
+        SmtpSenderBuilder.SmtpConfig tenantNoPort =
+                new SmtpSenderBuilder.SmtpConfig("smtp.acme.com", null, null, null, false, false);
+
+        lenient().when(encryptionService.decrypt(isNull())).thenReturn(null);
+
+        JavaMailSenderImpl sender = (JavaMailSenderImpl) SmtpSenderBuilder.build(
+                tenantNoPort, GLOBAL, encryptionService, "test");
+
+        assertEquals(JavaMailSenderImpl.DEFAULT_PORT, sender.getPort());
     }
 
     private Properties propsFor(SmtpSenderBuilder.SmtpConfig tenant) {

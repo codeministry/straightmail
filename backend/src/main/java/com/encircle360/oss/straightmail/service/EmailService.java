@@ -207,7 +207,9 @@ public class EmailService {
             return new String[]{subject, body, plain};
         } catch (IOException | TemplateException e) {
             log.error("Error while rendering template to string.", e);
-            return new String[0];
+            // Three null slots, not an empty array: sendMail() reads rendered[0..2] and
+            // reports the failure through its null guard as a 400, not as an index crash.
+            return new String[]{null, null, null};
         }
     }
 

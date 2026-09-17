@@ -1,7 +1,10 @@
 export const environment = {
   production: false,
   get apiUrl(): string {
-    return (window as any).__runtimeConfig?.apiUrl ?? 'http://localhost:50003/api';
+    // Relative, like the production default: proxy.conf.json forwards /api to the backend, which
+    // keeps every API call same-origin. An absolute http://localhost:50003 would bypass the proxy
+    // and make authInterceptor skip the request, since it only attaches credentials same-origin.
+    return (window as any).__runtimeConfig?.apiUrl ?? '/api';
   },
   get authMode(): 'oidc' | 'api-key' | 'none' {
     return (window as any).__runtimeConfig?.authMode ?? 'oidc';

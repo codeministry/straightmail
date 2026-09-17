@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -56,9 +55,6 @@ public class StatusController {
     private final ObjectProvider<FileTemplateSourceProvider> fileProviderProvider;
     private final TenantContext tenantContext;
     private final TenantProperties tenantProperties;
-
-    @Value("${auth.enabled:true}")
-    private boolean authEnabled;
 
     /**
      * Returns the aggregated sync status for all template sources.
@@ -117,14 +113,15 @@ public class StatusController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        // In OIDC mode, only admin users may trigger a sync (infrastructure operation).
-        if (authEnabled) {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            boolean isAdmin = auth != null && auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            if (!isAdmin) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
+        // A sync is an infrastructure operation, so it needs ADMIN in every auth mode. In api-key
+        // mode that is the global key, in none mode every anonymous request already carries the role.
+        // (This used to be gated on a property "auth.enabled" that exists nowhere, so it was always
+        // on — the gate is dropped rather than kept as a no-op.)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         GitSyncService gitSyncService = gitSyncServiceProvider.getIfAvailable();

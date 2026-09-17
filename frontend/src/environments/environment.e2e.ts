@@ -1,6 +1,7 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:50003',
+  // Relative, like dev and prod: every API call goes through the same base.
+  apiUrl: '/api',
   authMode: 'api-key' as 'oidc' | 'api-key' | 'none',
   oidc: {
     authority: 'https://localhost',

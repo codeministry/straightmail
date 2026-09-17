@@ -3,9 +3,7 @@ import { resolve } from 'path';
 import { Page } from '@playwright/test';
 import { EmailTemplate } from '../../src/app/core/services/api.service';
 
-// Direct backend URL (used by getInfo which bypasses the Angular proxy)
-const API_BASE = 'http://localhost:50003';
-// App dev server URL (used by proxied API calls: /api → http://localhost:50003)
+// App dev server URL; every API call is proxied: /api → http://localhost:50003
 const APP_BASE = 'http://localhost:4299';
 
 export const defaultTemplates: EmailTemplate[] = [
@@ -108,7 +106,9 @@ export const mockApiInfo = (page: Page) =>
         application: 'straightmail',
         status: 'running',
         authMode: 'api-key',
-        apiUrl: 'http://localhost:50003',
+        // Same value the backend's /v1/info serves by default; main.ts puts this whole
+        // response into window.__runtimeConfig, so it is what environment.apiUrl resolves to.
+        apiUrl: '/api',
         oidcAuthority: '',
       }),
     }),
@@ -149,7 +149,7 @@ export const mockTranslations = (page: Page, lang = 'en') => {
 };
 
 export const mockTenants = (page: Page, tenants = defaultTenants) =>
-  page.route(`${API_BASE}/v1/tenants/me`, async (route) =>
+  page.route(`${APP_BASE}/api/v1/tenants/me`, async (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -158,7 +158,7 @@ export const mockTenants = (page: Page, tenants = defaultTenants) =>
   );
 
 export const mockTenantList = (page: Page, tenants = defaultTenants) =>
-  page.route(`${API_BASE}/v1/tenants`, async (route) => {
+  page.route(`${APP_BASE}/api/v1/tenants`, async (route) => {
     if (route.request().method() === 'GET') {
       await route.fulfill({
         status: 200,
@@ -181,7 +181,7 @@ export const mockTenantCreate = (
     active: true,
   },
 ) =>
-  page.route(`${API_BASE}/v1/tenants`, async (route) => {
+  page.route(`${APP_BASE}/api/v1/tenants`, async (route) => {
     if (route.request().method() === 'POST') {
       await route.fulfill({
         status: 201,

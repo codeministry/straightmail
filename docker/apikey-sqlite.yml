@@ -27,7 +27,8 @@ services:
       - "127.0.0.1:1025:1025"
       - "127.0.0.1:8025:8025"
     healthcheck:
-      test: [ "CMD", "curl", "-sf", "http://localhost:8025/api/v1/info" ]
+      # The mailpit image ships no curl; readyz is its own built-in health command.
+      test: [ "CMD", "/mailpit", "readyz" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -40,6 +41,10 @@ services:
       dockerfile: Dockerfile
     container_name: straightmail-apikey-backend
     restart: unless-stopped
+    # Without this the first "docker compose up" races its dependencies and crash-loops.
+    depends_on:
+      mailpit:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: database
       AUTH_MODE: api-key
@@ -71,9 +76,15 @@ services:
       # -----------------------------------------------------------------------
       TEMPLATE_FILE_ENABLED: "true"
       TEMPLATE_GIT_SYNC_ENABLED: "true"
+      # Without this the provider reads its default path and silently lists zero templates.
+      TEMPLATES_FILE_BASE_PATH: /resources/templates
+      TEMPLATES_GIT_SYNC_BASE_PATH: /git
     volumes:
-      - ./data/sqlite:/data
-      - ./data/files:/resources/templates
+      # Writable paths are named volumes: they inherit the image's ownership, so the non-root
+      # container can write to them. A host bind mount would arrive root-owned on Linux.
+      - straightmail-apikey-sqlite:/data
+      - straightmail-apikey-git:/git
+      - ./data/files:/resources/templates:ro
     ports:
       - "127.0.0.1:50003:50003"
       - "127.0.0.1:50004:50004"
@@ -86,3 +97,4 @@ networks:
 
 volumes:
   straightmail-apikey-sqlite:
+  straightmail-apikey-git:

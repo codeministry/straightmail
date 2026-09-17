@@ -376,3 +376,55 @@ databaseChangeLog:
                 ALTER COLUMN smtp_tls SET DEFAULT false,
                 ALTER COLUMN smtp_ssl SET DEFAULT false,
                 ALTER COLUMN active SET DEFAULT true;
+
+  - changeSet:
+      id: 0010-template-uuid-postgresql
+      author: straightmail
+      comment: >
+        templates.id and template_tags.template_id were created as varchar(36) in 0001, but
+        Template.id is a java.util.UUID. SQLite is dynamically typed and never noticed, while
+        PostgreSQL rejects every "character varying = uuid" comparison, so all template CRUD
+        failed there. Converting in a separate changeset rather than editing 0001 keeps the
+        checksums of existing installations intact.
+      preConditions:
+        - onFail: MARK_RAN
+        - dbms:
+            type: postgresql
+      changes:
+        # Raw SQL rather than Liquibase's typed change tags: those are validated against every
+        # database before the precondition is evaluated, and SQLite supports neither
+        # dropForeignKeyConstraint nor addForeignKeyConstraint, so the whole changelog would fail
+        # to start there. Changeset 0009 uses raw SQL for the same reason.
+        - sql:
+            sql: >
+              ALTER TABLE template_tags DROP CONSTRAINT IF EXISTS fk_template_tags_template;
+        - sql:
+            sql: >
+              ALTER TABLE templates ALTER COLUMN id TYPE uuid USING id::uuid;
+        - sql:
+            sql: >
+              ALTER TABLE template_tags ALTER COLUMN template_id TYPE uuid USING template_id::uuid;
+        - sql:
+            sql: >
+              ALTER TABLE template_tags
+                ADD CONSTRAINT fk_template_tags_template
+                FOREIGN KEY (template_id) REFERENCES templates(id) ON DELETE CASCADE;
+
+  - changeSet:
+      id: 0011-git-sync-last-sync-at-bigint-postgresql
+      author: straightmail
+      comment: >
+        git_sync_status.last_sync_at was created as timestamp in 0006, but GitSyncStatus forces
+        @JdbcTypeCode(SqlTypes.BIGINT) because the SQLite JDBC driver cannot read a timestamp from
+        an integer column. PostgreSQL then rejects the bigint bind against a timestamp column.
+        Storing epoch millis on both databases keeps the entity mapping single-valued.
+      preConditions:
+        - onFail: MARK_RAN
+        - dbms:
+            type: postgresql
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE git_sync_status
+                ALTER COLUMN last_sync_at TYPE bigint
+                USING (EXTRACT(EPOCH FROM last_sync_at) * 1000)::bigint;

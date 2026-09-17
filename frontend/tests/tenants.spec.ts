@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures';
 
-// In E2E environment, apiUrl = 'http://localhost:50003' (no /api suffix)
-const API_BASE = 'http://localhost:50003';
+// Every API call is proxied through the app origin: /api → http://localhost:50003
+const API_BASE = 'http://localhost:4299/api';
 
 const mockTenantData = [
   {

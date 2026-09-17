@@ -9,7 +9,8 @@ import { AuthState } from '../../store/auth/auth.state';
  * Facade service for OIDC-based authentication.
  *
  * Wraps NGXS {@link AuthState} selectors and exposes observable streams for authentication
- * status, user data, access token, and roles. Auth lifecycle actions ({@code CheckAuth},
+ * status, user data and roles. The access token comes from the OIDC library via
+ * {@link AuthService#getAccessToken}, not from the store. Auth lifecycle actions ({@code CheckAuth},
  * {@code Login}, {@code Logout}) are dispatched through the NGXS store. Only used when
  * {@code environment.authEnabled} is {@code true}.
  */
@@ -28,11 +29,6 @@ export class AuthService {
   /** Observable that emits the OIDC user-data claims object. */
   get userData$(): Observable<any> {
     return this.store.select(AuthState.userData);
-  }
-
-  /** Observable that emits the current JWT access token, or {@code null} when not authenticated. */
-  get accessToken$(): Observable<string | null> {
-    return this.store.select(AuthState.accessToken);
   }
 
   /** Observable that emits the list of roles extracted from the JWT claims. */

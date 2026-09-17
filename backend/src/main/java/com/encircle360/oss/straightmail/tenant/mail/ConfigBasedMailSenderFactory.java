@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * factory cannot resolve a sender.
  *
  * <p>For every field not explicitly set on a {@link TenantProperties.TenantConfig}, the factory
- * falls back to the global {@code spring.mail.*} settings (coalesce semantics), mirroring the
+ * falls back to the global {@code spring.mail.*} settings as a whole, mirroring the
  * behaviour of {@link TenantMailSenderFactory}.
  *
  * <p>Passwords in {@code TenantConfig} are supplied as plain text from YAML or environment
@@ -64,7 +64,8 @@ public class ConfigBasedMailSenderFactory {
      * Returns a {@link JavaMailSender} configured for the given tenant config.
      *
      * <p>Returns the cached sender if one exists for the tenant, otherwise builds and caches a new one.
-     * Tenant-specific fields take precedence; any unset field falls back to the global SMTP settings.
+     * A tenant that declares an SMTP host is used in full; otherwise the global SMTP settings are
+     * used in full. Credentials are never mixed across the two.
      *
      * @param config the tenant config whose SMTP settings should be used
      * @return a configured {@link JavaMailSender} for the tenant

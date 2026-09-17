@@ -60,7 +60,16 @@ public class PageContainer<T> {
             size = 0;
         }
 
-        return new PageContainer<>(elements, page, size, totalElements, sort);
+        // Builder, not the all-args constructor. That constructor takes (content, size, page)
+        // while every caller thinks in (page, size), so a positional call silently swapped the two
+        // and every list endpoint answered with page and size exchanged.
+        return PageContainer.<T>builder()
+                .content(elements)
+                .page(page)
+                .size(size)
+                .totalElements(totalElements)
+                .sort(sort)
+                .build();
     }
 
     /**
@@ -72,6 +81,12 @@ public class PageContainer<T> {
      * @return a populated {@link PageContainer}
      */
     public static <T> PageContainer<T> of(List<T> elements, Page<?> pageable) {
-        return new PageContainer<>(elements, pageable.getNumber(), pageable.getSize(), pageable.getTotalElements(), pageable.getSort().toString());
+        return PageContainer.<T>builder()
+                .content(elements)
+                .page(pageable.getNumber())
+                .size(pageable.getSize())
+                .totalElements(pageable.getTotalElements())
+                .sort(pageable.getSort().toString())
+                .build();
     }
 }

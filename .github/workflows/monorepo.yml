@@ -4,6 +4,12 @@ on:
   push:
     branches: [ "master", "main" ]
 
+# One publish at a time for ghcr.io/<repo>/backend, so a fast follow-up push cannot overtake
+# the run before it and leave an older image behind :latest.
+concurrency:
+  group: monorepo-image-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
 

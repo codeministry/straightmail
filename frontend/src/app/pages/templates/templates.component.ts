@@ -12,7 +12,7 @@ import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
 import { Store } from '@ngxs/store';
 import { TranslatePipe } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { distinctUntilChanged, filter } from 'rxjs';
+import { distinctUntilChanged, filter, finalize } from 'rxjs';
 import { ApiService, EmailTemplate, GitSyncStatusDTO } from '../../core/services/api.service';
 import { TemplatesActions } from './store/templates.actions';
 import { TemplateSourceTab, TemplatesState } from './store/templates.state';
@@ -24,6 +24,7 @@ import { TemplateGridComponent } from './template-grid/template-grid.component';
 import { GitSyncCardComponent } from '../dashboard/git-sync-card/git-sync-card.component';
 import { UiState } from '../../store/ui/ui.state';
 import { UiActions } from '../../store/ui/ui.actions';
+import { ShowToast } from '../../store/toast/toast.actions';
 
 @Component({
   selector: 'app-templates',
@@ -130,16 +131,21 @@ export class TemplatesComponent implements OnInit {
 
   /**
    * Triggers a manual git sync for the given tenant and updates the local status signal.
+   * Releases the button and shows a toast whether the sync succeeds or fails.
    *
    * @param tenantSlug The slug of the tenant to sync.
    */
   onGitSync(tenantSlug: string): void {
     this.syncingCurrentTenant.set(true);
-    this.apiService.triggerGitSync(tenantSlug).subscribe({
-      next: (updated) => this.tenantSyncStatus.set(updated),
-      error: () => {},
-      complete: () => this.syncingCurrentTenant.set(false),
-    });
+    // finalize, not complete: RxJS never calls complete after an error, which used to leave the
+    // spinner running and the button disabled with nothing to explain it.
+    this.apiService
+      .triggerGitSync(tenantSlug)
+      .pipe(finalize(() => this.syncingCurrentTenant.set(false)))
+      .subscribe({
+        next: (updated) => this.tenantSyncStatus.set(updated),
+        error: () => this.store.dispatch(new ShowToast('dashboard.sync_error', 'error')),
+      });
   }
 
   /**

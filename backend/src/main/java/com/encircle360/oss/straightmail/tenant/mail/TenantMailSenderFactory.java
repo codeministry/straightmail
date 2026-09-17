@@ -55,8 +55,9 @@ public class TenantMailSenderFactory {
     /**
      * Builds and returns a {@link JavaMailSender} configured for the given tenant.
      *
-     * <p>A new sender is constructed on every invocation. Tenant-specific SMTP settings take
-     * precedence; any unset field falls back to the global SMTP configuration.
+     * <p>A new sender is constructed on every invocation. A tenant that declares an SMTP host is
+     * used in full; otherwise the global SMTP configuration is used in full. Credentials are never
+     * mixed across the two.
      *
      * @param tenant the tenant whose SMTP configuration should be used
      * @return a configured {@link JavaMailSender} for the tenant

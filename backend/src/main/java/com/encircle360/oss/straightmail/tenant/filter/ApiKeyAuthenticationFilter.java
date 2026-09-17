@@ -3,6 +3,7 @@ package com.encircle360.oss.straightmail.tenant.filter;
 import com.encircle360.oss.straightmail.repository.TenantRepository;
 import com.encircle360.oss.straightmail.service.TenantService;
 import com.encircle360.oss.straightmail.tenant.TenantContext;
+import com.encircle360.oss.straightmail.util.ApiPaths;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -82,11 +83,7 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         if (path.startsWith("/actuator")) return true;
         if (path.matches(".*/v1/info$")) return true;
-        // Require a path-segment boundary after the prefix so that e.g. "/api-key-login"
-        // is not incorrectly treated as an API path when the prefix is "/api".
-        return !apiPrefix.isBlank()
-                && !path.equals(apiPrefix)
-                && !path.startsWith(apiPrefix + "/");
+        return !ApiPaths.isApiPath(path, apiPrefix);
     }
 
     @Override

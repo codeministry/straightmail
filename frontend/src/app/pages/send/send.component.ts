@@ -113,7 +113,9 @@ export class SendComponent implements OnInit {
 
   // ── By Template ID form ──────────────────────────────────────────────────────
   byIdForm = this.fb.group({
-    recipients: this.fb.array<FormControl<string | null>>([]),
+    // Validators.required rejects an empty array, so the form can no longer be submitted
+    // without a single recipient — the template already showed the error, nothing enforced it.
+    recipients: this.fb.array<FormControl<string | null>>([], Validators.required),
     recipientInput: [''],
     sender: ['', [Validators.required, Validators.email]],
     emailTemplateId: ['', Validators.required],
@@ -169,7 +171,9 @@ export class SendComponent implements OnInit {
 
   // ── Inline form ──────────────────────────────────────────────────────────────
   inlineForm = this.fb.group({
-    recipients: this.fb.array<FormControl<string | null>>([]),
+    // Validators.required rejects an empty array, so the form can no longer be submitted
+    // without a single recipient — the template already showed the error, nothing enforced it.
+    recipients: this.fb.array<FormControl<string | null>>([], Validators.required),
     recipientInput: [''],
     sender: ['', [Validators.required, Validators.email]],
     subject: ['', Validators.required],
@@ -221,14 +225,15 @@ export class SendComponent implements OnInit {
   private restoreForm(form: FormGroup, values: Record<string, any>): void {
     if (!values || !Object.keys(values).length) return;
 
-    // Restore FormArrays first
+    // Restore FormArrays first. The restored chips carry the same email validator the chip field
+    // attaches, so a persisted draft is judged exactly like a freshly typed one.
     ['recipients', 'cc', 'bcc'].forEach((key) => {
       const arr = form.get(key) as FormArray;
       const val = values[key] as string[];
       if (arr && val && Array.isArray(val)) {
         arr.clear();
         val.forEach((v) => {
-          if (v) arr.push(new FormControl(v));
+          if (v) arr.push(new FormControl(v, Validators.email));
         });
       }
     });
