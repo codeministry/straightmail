@@ -148,7 +148,11 @@ jobs:
           cache-to: type=registry,ref=ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend:buildcache,mode=max
 
       - name: Scan image for known vulnerabilities
-        uses: aquasecurity/trivy-action@0.28.0
+        # 0.28.0 aufloest GitHub nicht mehr, das Tag existiert nicht mehr im Action-Repo.
+        # Der Release-Lauf vom 2026-09-17 starb daran schon in "Set up job", also bevor
+        # ein einziger Schritt lief: Actions werden vor dem ersten Schritt aufgeloest.
+        # v0.36.0 kennt alle fuenf hier benutzten Eingaben unveraendert.
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ghcr.io/${{ steps.repo.outputs.repo_lowercase }}/backend@${{ steps.build.outputs.digest }}
           format: sarif
