@@ -7,6 +7,16 @@ For component-specific changes see [`backend/CHANGELOG.md`](backend/CHANGELOG.md
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Documentation
+
+- README: the template preview renders in an `<iframe srcdoc>` and therefore inherits the page's
+  Content-Security-Policy, so images on foreign hosts are blocked by the shipped default. The
+  security section now states this and carries a complete `SECURITY_CONTENT_SECURITY_POLICY`
+  example that widens `img-src` while keeping every other directive, identity provider origin
+  included. No behaviour change — the default policy is unchanged
+
 ## [0.5.0] - 2026-09-17
 
 For component-specific changes see [`backend/CHANGELOG.md`](backend/CHANGELOG.md) and [`frontend/CHANGELOG.md`](frontend/CHANGELOG.md).

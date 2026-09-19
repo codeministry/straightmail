@@ -327,6 +327,36 @@ environment:
 `script-src` is strict — the Admin UI ships without `unsafe-eval` and runs NGXS in its
 CSP-compatible mode. Weakening it defeats the reason the header is there.
 
+**Template previews and remote images.** The Admin UI shows a rendered template in an
+`<iframe srcdoc>`, and an `about:srcdoc` document inherits the policy of the page that embeds it —
+so the header above governs the preview as well. With the shipped default, every image a template
+pulls from a foreign host is blocked and the browser console reports a violation of
+`img-src 'self' data: https://www.gravatar.com`. A `<meta http-equiv>` inside the previewed HTML
+cannot repair that: an inherited policy can only be tightened, never widened, and `blob:` URLs
+inherit it too. If your templates reference remote images, widen `img-src` through the override —
+and carry the rest of the policy along, identity provider origin included, because the override
+replaces the generated one completely:
+
+```yaml
+environment:
+  SECURITY_CONTENT_SECURITY_POLICY: >-
+    default-src 'self';
+    script-src 'self';
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com data:;
+    img-src 'self' data: https:;
+    connect-src 'self' https://idp.example.com;
+    frame-src 'self' https://idp.example.com;
+    form-action 'self' https://idp.example.com;
+    frame-ancestors 'none';
+    base-uri 'self';
+    object-src 'none'
+```
+
+That widens image loading to any HTTPS host and leaves every other directive as it was. Unrelated
+to the policy, the preview iframe is sandboxed without `allow-scripts`, so scripts inside a template
+never execute — the console message saying so is expected, not a misconfiguration.
+
 **HSTS behind a TLS terminator.** `server.forward-headers-strategy` is set to `framework`, so Spring
 Security recognises HTTPS from the `X-Forwarded-*` headers your proxy sends. Without a TLS terminator
 in front, HSTS is not emitted at all.
@@ -511,7 +541,7 @@ Deployment-level settings:
 |------------------------------------|----------|--------------------------------------------------------------------------------|
 | `ENCRYPTION_KEY`                   | —        | **Required.** AES-256 key, Base64-encoded (`openssl rand -base64 32`). A value that is not valid Base64 aborts startup |
 | `MANAGEMENT_ENDPOINTS`             | `health` | Comma-separated actuator endpoints exposed on `:50004`                         |
-| `SECURITY_CONTENT_SECURITY_POLICY` | derived  | Replaces the generated CSP wholesale; the default adds `auth.issuer-uri` to `connect-src`, `frame-src` and `form-action` |
+| `SECURITY_CONTENT_SECURITY_POLICY` | derived  | Replaces the generated CSP wholesale; the default adds `auth.issuer-uri` to `connect-src`, `frame-src` and `form-action`. Needed to show remote images in template previews — see [Security defaults in 0.5.0](#security-defaults-in-050) |
 
 ## Operation Modes (Spring Profiles)
 
