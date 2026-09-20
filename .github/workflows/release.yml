@@ -4,6 +4,19 @@ on:
   push:
     branches: [master, main]
     tags: ['v*.*.*']
+    # ACHTUNG, ungeprueft: ob GitHub paths-ignore auch auf TAG-Pushes anwendet,
+    # ist nicht belegt. Faellt ein v*-Tag auf einen reinen Doku-Commit, koennte
+    # der Release-Lauf ausbleiben. Beim naechsten Release einmal nachsehen.
+    # Reine Dokumentationsaenderungen bauen kein Image mehr. Vorher loeste jeder
+    # README-Push einen vollen Build aus, GHCR bekam ein neues Tag, der ArgoCD
+    # Image Updater rollte die Produktion neu aus und hinterliess ein weiteres
+    # ReplicaSet samt Trivy-Report. Am 2026-09-20 waren das drei Deployments
+    # eines unveraenderten Programms.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
 
 # Only one release flow at a time; never cancel a tagged release mid-flight
 concurrency:
