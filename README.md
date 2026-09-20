@@ -1,9 +1,9 @@
 # <img src="frontend/public/logos/logo.svg" alt="straightmail" width="34"> straightmail
 
-[![Monorepo Full Build](.github/workflows/monorepo.yml/badge.svg)](.github/workflows/monorepo.yml)
-[![Backend Build](.github/workflows/backend.yml/badge.svg)](.github/workflows/backend.yml)
-[![Frontend Build](.github/workflows/frontend.yml/badge.svg)](.github/workflows/frontend.yml)
-[![Container](https://img.shields.io/badge/ghcr.io-encircle360--oss%2Fstraightmail-blue?logo=docker)](https://github.com/encircle360-oss/straightmail/pkgs/container/straightmail)
+[![Monorepo Full Build](../../actions/workflows/monorepo.yml/badge.svg)](../../actions/workflows/monorepo.yml)
+[![Backend Build](../../actions/workflows/backend.yml/badge.svg)](../../actions/workflows/backend.yml)
+[![Frontend Build](../../actions/workflows/frontend.yml/badge.svg)](../../actions/workflows/frontend.yml)
+[![Container](https://img.shields.io/badge/ghcr.io-encircle360--oss%2Fstraightmail-blue?logo=docker)](../../pkgs/container/straightmail)
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Java 25](https://img.shields.io/badge/Java-25-orange?logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
