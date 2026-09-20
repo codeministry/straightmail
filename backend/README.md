@@ -1,4 +1,4 @@
-[![pipeline status](https://gitlab.com/encircle360-oss/straightmail/straightmail/badges/master/pipeline.svg)](https://gitlab.com/encircle360-oss/straightmail/straightmail/commits/master)
+[![Backend Build](../../../actions/workflows/backend.yml/badge.svg)](../../../actions/workflows/backend.yml)
 
 ## straightmail - mail sending APIs with template and i18n support
 
@@ -16,7 +16,7 @@ docker run -p 50003:50003 -p 50004:50004 \
     --env SMTP_ENABLE_TLS=true \
     --env SMTP_ENABLE_SSL=false \
     --env SPRING_PROFILES_ACTIVE=development \
-    registry.gitlab.com/encircle360-oss/straightmail/straightmail:latest
+    ghcr.io/encircle360-oss/straightmail:latest
 ```
 
 Variables should be set to your correct SMTP credentals and host. `DEFAULT_SENDER` should be set to your default email
@@ -106,7 +106,7 @@ docker run -p 50003:50003 -p 50004:50004 \
     --env DB_URL=jdbc:postgresql://your-postgres-host:5432/straightmail \
     --env DB_USERNAME=straightmail \
     --env DB_PASSWORD=yourpassword \
-    registry.gitlab.com/encircle360-oss/straightmail/straightmail:latest
+    ghcr.io/encircle360-oss/straightmail:latest
 ```
 
 Environment variables for database configuration:
@@ -130,14 +130,14 @@ You can find examples how [templates](src/main/resources/templates) or [i18n fil
 like [here](src/main/resources).
 
 ```
-FROM registry.gitlab.com/encircle360-oss/straightmail/straightmail:latest
+FROM ghcr.io/encircle360-oss/straightmail:latest
 ADD templates /resources/templates # add your template directory containing *.ftl templates here
 ADD i18n /resources/i18n # add your i18n directory containing messages.properties files here
 ```
 
 If you're done with this you can build your own image using docker-cli `docker build .` or let your build pipeline do
 that.
-E.g. we suggest to use gitlab-ci to always have your own customized straightmail docker image.
+E.g. we suggest to use GitHub Actions to always have your own customized straightmail docker image.
 
 After you've build your own docker image with your own templates you can use the REST api to send emails.
 The `emailTemplateId` field corresponds to the template filename. If you've added a template called

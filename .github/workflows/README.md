@@ -43,7 +43,7 @@ direct pushes to a trunk branch — publishes a backend-only multi-arch image, s
 its provenance. The `docker` job is skipped on pull requests.
 
 **Jobs:** `build` (JAR artifact, 1 day) · `test` · `docker` (`needs: [build, test]`, trunk only)  
-**Image:** `ghcr.io/codeministry/straightmail/backend` — `linux/amd64`, `linux/arm64`  
+**Image:** `ghcr.io/encircle360-oss/straightmail/backend` — `linux/amd64`, `linux/arm64`  
 **Tags:** `latest` · short commit SHA (7 hex)  
 **Build cache:** registry cache at `…/backend:buildcache`  
 **Security:** SBOM + provenance in the build, Trivy scan (CRITICAL/HIGH, `ignore-unfixed`) uploaded
@@ -74,7 +74,7 @@ both workflows run and the later one wins.
 
 **Jobs:** `backend` (full build + tests, `combined-jar` artifact, 7 days) · `frontend` (Vitest only) ·
 `docker-combined` (`needs: [backend, frontend]`)  
-**Image:** `ghcr.io/codeministry/straightmail/backend` — `linux/amd64`, `linux/arm64`  
+**Image:** `ghcr.io/encircle360-oss/straightmail/backend` — `linux/amd64`, `linux/arm64`  
 **Tags:** `latest` · short commit SHA (7 hex)  
 **Security:** identical to `backend.yml` — SBOM, provenance, Trivy → SARIF, attestation
 
@@ -88,7 +88,7 @@ and publishes a multi-arch image with full supply-chain metadata. Only one relea
 ref at a time, and a tagged release is never cancelled mid-flight.
 
 **Job:** `build-and-push`  
-**Image:** `ghcr.io/codeministry/straightmail` — `linux/amd64`, `linux/arm64`  
+**Image:** `ghcr.io/encircle360-oss/straightmail` — `linux/amd64`, `linux/arm64`  
 **Tags:** `latest` (default branch only) · `{{version}}` · `{{major}}.{{minor}}` · `{{major}}` from a
 `v*.*.*` tag · `<branch>-<sha>` for branch builds — e.g. tag `v0.5.0` yields `0.5.0`, `0.5`, `0`  
 **Build cache:** GitHub Actions cache (`type=gha`)  
@@ -159,6 +159,6 @@ single job.
 - **Local Compose stacks do not pull these images.** The four stacks under `docker/` build from
   `../backend` with `build.context`, so a published image is never required for local development.
 - **Image repositories differ by purpose.** `release.yml` publishes to
-  `ghcr.io/codeministry/straightmail`; `backend.yml` and `monorepo.yml` publish to the nested
+  `ghcr.io/encircle360-oss/straightmail`; `backend.yml` and `monorepo.yml` publish to the nested
   `…/straightmail/backend`. Deployments that track 7-hex commit tags consume the latter.
 - **Java 25 / Node 22** are the pinned toolchain versions across every workflow.

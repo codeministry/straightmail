@@ -1,9 +1,9 @@
 # StraightMail Admin Console
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/encircle360-oss/straightmail-admin/ci.yml?branch=main)](https://github.com/encircle360-oss/straightmail-admin/actions)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Angular](https://img.shields.io/badge/Angular-21.2-red.svg)](https://angular.io/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![Frontend Build](../../../actions/workflows/frontend.yml/badge.svg)](../../../actions/workflows/frontend.yml)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](../LICENSE)
+[![Angular](https://img.shields.io/badge/Angular-22.1-DD0031?logo=angular&logoColor=white)](https://angular.io/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](https://www.typescriptlang.org/)
 [![npm](https://img.shields.io/badge/npm-11.8.0-brightgreen.svg)](https://www.npmjs.com/)
 
 A modern, open-source Angular administration console for managing email templates, rendering, and sending operations with the StraightMail email service.
@@ -66,14 +66,14 @@ A modern, open-source Angular administration console for managing email template
 - Node.js (v18 or higher recommended)
 - npm 11.8.0 or higher
 - Angular CLI 21.2 or higher
-- A running [StraightMail](https://github.com/encircle360-oss/straightmail) backend (default: `http://localhost:50003`)
+- A running [StraightMail](../README.md) backend (default: `http://localhost:50003`)
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/encircle360-oss/straightmail-admin.git
-cd straightmail-admin
+git clone https://github.com/encircle360-oss/straightmail.git
+cd straightmail/frontend
 
 # Install dependencies
 npm install
@@ -331,7 +331,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Support
 
-For issues and questions, please use the [GitHub Issues](https://github.com/encircle360-oss/straightmail-admin/issues) page.
+For issues and questions, please use the [GitHub Issues](../../../issues) page.
 
 ---
 
