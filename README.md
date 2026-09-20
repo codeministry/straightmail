@@ -1,8 +1,8 @@
 # <img src="frontend/public/logos/logo.svg" alt="straightmail" width="34"> straightmail
 
-[![Monorepo Full Build](https://github.com/encircle360-oss/straightmail/actions/workflows/monorepo.yml/badge.svg)](https://github.com/encircle360-oss/straightmail/actions/workflows/monorepo.yml)
-[![Backend Build](https://github.com/encircle360-oss/straightmail/actions/workflows/backend.yml/badge.svg)](https://github.com/encircle360-oss/straightmail/actions/workflows/backend.yml)
-[![Frontend Build](https://github.com/encircle360-oss/straightmail/actions/workflows/frontend.yml/badge.svg)](https://github.com/encircle360-oss/straightmail/actions/workflows/frontend.yml)
+[![Monorepo Full Build](workflows/monorepo.yml/badge.svg)](workflows/monorepo.yml)
+[![Backend Build](workflows/backend.yml/badge.svg)](workflows/backend.yml)
+[![Frontend Build](workflows/frontend.yml/badge.svg)](workflows/frontend.yml)
 [![Container](https://img.shields.io/badge/ghcr.io-encircle360--oss%2Fstraightmail-blue?logo=docker)](https://github.com/encircle360-oss/straightmail/pkgs/container/straightmail)
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
