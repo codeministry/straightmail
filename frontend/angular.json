@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "straightmail-admin": {
+    "straightmail-frontend": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -84,14 +84,14 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "straightmail-admin:build:production"
+              "buildTarget": "straightmail-frontend:build:production"
             },
             "development": {
-              "buildTarget": "straightmail-admin:build:development",
+              "buildTarget": "straightmail-frontend:build:development",
               "proxyConfig": "proxy.conf.json"
             },
             "e2e": {
-              "buildTarget": "straightmail-admin:build:e2e"
+              "buildTarget": "straightmail-frontend:build:e2e"
             }
           },
           "defaultConfiguration": "development"

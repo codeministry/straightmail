@@ -99,7 +99,7 @@ By default, authentication is **disabled** in development mode so you can start 
 ## 🏗️ Project Structure
 
 ```
-straightmail-admin/
+straightmail-frontend/
 ├── src/
 │   ├── app/
 │   │   ├── core/
