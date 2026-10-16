@@ -45,3 +45,6 @@ Plans
 # Docker local data
 data/
 docker/data/
+
+# Local git worktrees, one per parallel session
+.worktrees/

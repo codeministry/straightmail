@@ -21,6 +21,13 @@ repositories {
     mavenLocal()
 }
 
+// Spring Boot 4.1.1, the newest stable release on 2026-10-16, still manages Tomcat 11.0.24 and
+// FreeMarker 2.3.34. Both carry CRITICAL CVEs with a published fix: CVE-2026-65182, -65905 and
+// -68525 (Tomcat, fixed in 11.0.25) and CVE-2026-84939 (FreeMarker, fixed in 2.3.35). Remove each
+// override once the Boot version above manages that version or a newer one.
+ext['tomcat.version'] = '11.0.27'
+ext['freemarker.version'] = '2.3.35'
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
