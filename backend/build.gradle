@@ -1,5 +1,5 @@
 plugins {
-    id "org.springframework.boot" version "4.1.1"
+    id "org.springframework.boot" version "4.1.2"
     id "io.spring.dependency-management" version "1.1.7"
     id "java"
     id "jacoco"
@@ -30,8 +30,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     runtimeOnly 'org.postgresql:postgresql'
-    runtimeOnly 'org.xerial:sqlite-jdbc:3.53.4.0'
-    implementation 'org.hibernate.orm:hibernate-community-dialects:7.4.5.Final'
+    runtimeOnly 'org.xerial:sqlite-jdbc'
+    implementation 'org.hibernate.orm:hibernate-community-dialects'
     implementation 'org.liquibase:liquibase-core'
     // Spring Boot 4 modularization: Liquibase auto-configuration extracted into its own module
     implementation 'org.springframework.boot:spring-boot-liquibase'
@@ -50,8 +50,8 @@ dependencies {
     testAnnotationProcessor "org.mapstruct:mapstruct-processor:1.6.3"
 
     // Testcontainers for integration testing (MailHog)
-    testImplementation 'org.testcontainers:testcontainers:2.0.5'
-    testImplementation 'org.testcontainers:testcontainers-junit-jupiter:2.0.5'
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
 
     // Jackson 3 (Spring Boot 4): java.time support is built-in, no separate jsr310 module needed.
 

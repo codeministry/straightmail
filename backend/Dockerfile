@@ -6,6 +6,14 @@ RUN java -Djarmode=tools -jar application.jar extract --layers --destination ext
 FROM eclipse-temurin:25-jre
 WORKDIR /app
 
+# Pull Ubuntu security fixes the base image has not been rebuilt with yet. The base also ships
+# Canonical's pebble service manager, a Go binary outside dpkg that the JVM never runs; its bundled
+# Go stdlib lags behind upstream fixes and drags critical CVEs into every image scan, so it goes.
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -f /usr/bin/pebble
+
 # Fixed UID/GID so the ownership of the writable directories below survives into any volume
 # Docker initialises from this image.
 RUN groupadd -r -g 10001 straightmail && useradd -r -u 10001 -g straightmail straightmail
