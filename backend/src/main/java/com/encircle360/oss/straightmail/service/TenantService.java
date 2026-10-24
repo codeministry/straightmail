@@ -8,6 +8,7 @@ import com.encircle360.oss.straightmail.model.Tenant;
 import com.encircle360.oss.straightmail.repository.GitSyncStatusRepository;
 import com.encircle360.oss.straightmail.repository.GitTemplateCacheRepository;
 import com.encircle360.oss.straightmail.repository.TenantRepository;
+import com.encircle360.oss.straightmail.util.LogSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -133,7 +134,7 @@ public class TenantService {
         gitTemplateCacheRepository.deleteAllByTenantId(slug);
         gitSyncStatusRepository.deleteById(slug);
         tenantRepository.deleteById(slug);
-        log.info("Tenant '{}' deleted", slug);
+        log.info("Tenant '{}' deleted", LogSanitizer.sanitize(slug));
     }
 
     /**

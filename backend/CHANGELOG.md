@@ -14,6 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   previously instantiate `freemarker.template.utility.Execute` and run OS commands, reachable by any
   caller holding a per-tenant API key via `/v1/email/inline` or a stored template — **breaking for
   templates using `?new` or `?api`**
+- Templates no longer see Spring's `RequestContext`: `springMacroRequestContext` is now the narrow
+  `TemplateRequestContext` facade (message and URL methods only). Through
+  `springMacroRequestContext.webApplicationContext` any template could read every configuration
+  property, `encryption.key` included, and call any bean. `JsonNodeObjectWrapper` also pins
+  FreeMarker's `DefaultMemberAccessPolicy`, so `getClass()` and class-loader reflection are blocked —
+  **breaking for templates using the form-binding macros (`spring.bind`, `spring.formInput`, …)**
+- CSRF protection is enabled on all three filter chains and exempts only the API prefix, which
+  authenticates by bearer token or `X-API-KEY` header, never by cookie
+- Request-controlled values (template ID, locale, tenant slug, template path) pass through
+  `LogSanitizer` before logging, so CR/LF and other control characters cannot forge log entries
+- `EncryptionService` concatenates IV and ciphertext without length arithmetic
+- Runtime image applies pending Ubuntu security updates and drops the unused `/usr/bin/pebble` Go
+  binary, which carried critical Go stdlib CVEs
 - `FileTemplateSourceProvider` and `AbstractTemplateLoader` normalise template names and confine them
   to the tenant directory; `../other-tenant/welcome` no longer resolves, over the URL or through the
   `templateId` in the JSON body of `/v1/render` and `/v1/email`
@@ -48,6 +61,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Spring Boot 4.1.2, Gradle 9.8.2; `hibernate-community-dialects`, `sqlite-jdbc` and Testcontainers
+  versions now come from the Boot BOM, so the dialect stays aligned with Hibernate core
+- Keycloak 26.8.1 in the OIDC Compose stacks
 - Switched default database from PostgreSQL to SQLite (`jdbc:sqlite:`); Liquibase changesets updated
 - MailHog replaced by Mailpit in Testcontainers (`AbstractTest`) and all Docker Compose stacks
 - Keycloak hostname handling updated; JWK endpoint URL and issuer URL split into separate config properties

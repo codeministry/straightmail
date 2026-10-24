@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
@@ -208,7 +208,7 @@ public class SecurityConfig {
     public SecurityFilterChain securedFilterChain(HttpSecurity http, JwtDecoder jwtDecoder, JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
         http
                 .cors(withDefaults())
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(this::exemptApiFromCsrf)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(apiPrefix + "/v1/info").permitAll()
@@ -249,7 +249,7 @@ public class SecurityConfig {
     public SecurityFilterChain apiKeyFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(withDefaults())
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(this::exemptApiFromCsrf)
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 
         this.applySecurityHeaders(http);
@@ -283,7 +283,7 @@ public class SecurityConfig {
     public SecurityFilterChain openFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(withDefaults())
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(this::exemptApiFromCsrf)
                 .anonymous(anon -> anon.authorities("ROLE_ADMIN"))
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 
@@ -331,6 +331,21 @@ public class SecurityConfig {
         FilterRegistrationBean<NoAuthTenantResolutionFilter> reg = new FilterRegistrationBean<>(filter);
         reg.setEnabled(false);
         return reg;
+    }
+
+    /**
+     * Keeps CSRF protection on, but exempts the API, in all three auth modes.
+     *
+     * <p>Every API call authenticates with a credential the browser never attaches on its own: a
+     * bearer token or an {@code X-API-KEY} header, both set explicitly by the SPA or the API client.
+     * No session cookie authenticates a request, so a cross-site request carries nothing to abuse
+     * and a CSRF token would only break non-browser clients. Any route outside the API prefix stays
+     * protected, so a future cookie-backed or form endpoint does not silently lose the check.
+     *
+     * @param csrf the CSRF configurer of the chain under construction
+     */
+    private void exemptApiFromCsrf(CsrfConfigurer<HttpSecurity> csrf) {
+        csrf.ignoringRequestMatchers(apiPrefix + "/**");
     }
 
     /**

@@ -47,6 +47,36 @@ class FreemarkerSandboxTest {
     }
 
     @Test
+    void request_context_does_not_expose_the_application_context() {
+        // RequestContext.getWebApplicationContext() would hand the template every bean and every
+        // property, encryption.key included.
+        String payload = "${springMacroRequestContext.webApplicationContext.environment"
+            + ".getProperty('encryption.key')}";
+
+        Exception thrown = Assertions.assertThrows(Exception.class,
+            () -> freemarkerService.renderTemplateToString(payload, "en", null));
+
+        Assertions.assertFalse(String.valueOf(thrown.getMessage()).contains("AAAAAAAA"),
+            "the encryption key must never reach the template");
+    }
+
+    @Test
+    void templates_cannot_reflect_via_get_class() {
+        String payload = "${springMacroRequestContext.class.classLoader}";
+
+        Assertions.assertThrows(Exception.class,
+            () -> freemarkerService.renderTemplateToString(payload, "en", null));
+    }
+
+    @Test
+    void spring_message_macros_still_render() {
+        String rendered = Assertions.assertDoesNotThrow(() -> freemarkerService.renderTemplateToString(
+            "<@spring.messageText 'no.such.key', 'fallback' />", "en", null));
+
+        Assertions.assertEquals("fallback", rendered);
+    }
+
+    @Test
     void ordinary_templates_still_render() {
         String rendered = Assertions.assertDoesNotThrow(
             () -> freemarkerService.renderTemplateToString("Hello ${'world'}", "en", null));

@@ -1,5 +1,5 @@
 plugins {
-    id "org.springframework.boot" version "4.1.1"
+    id "org.springframework.boot" version "4.1.2"
     id "io.spring.dependency-management" version "1.1.7"
     id "java"
     id "jacoco"
@@ -21,13 +21,6 @@ repositories {
     mavenLocal()
 }
 
-// Spring Boot 4.1.1, the newest stable release on 2026-10-16, still manages Tomcat 11.0.24 and
-// FreeMarker 2.3.34. Both carry CRITICAL CVEs with a published fix: CVE-2026-65182, -65905 and
-// -68525 (Tomcat, fixed in 11.0.25) and CVE-2026-84939 (FreeMarker, fixed in 2.3.35). Remove each
-// override once the Boot version above manages that version or a newer one.
-ext['tomcat.version'] = '11.0.27'
-ext['freemarker.version'] = '2.3.35'
-
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
@@ -37,8 +30,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     runtimeOnly 'org.postgresql:postgresql'
-    runtimeOnly 'org.xerial:sqlite-jdbc:3.53.4.0'
-    implementation 'org.hibernate.orm:hibernate-community-dialects:7.4.5.Final'
+    runtimeOnly 'org.xerial:sqlite-jdbc'
+    implementation 'org.hibernate.orm:hibernate-community-dialects'
     implementation 'org.liquibase:liquibase-core'
     // Spring Boot 4 modularization: Liquibase auto-configuration extracted into its own module
     implementation 'org.springframework.boot:spring-boot-liquibase'
@@ -57,8 +50,8 @@ dependencies {
     testAnnotationProcessor "org.mapstruct:mapstruct-processor:1.6.3"
 
     // Testcontainers for integration testing (MailHog)
-    testImplementation 'org.testcontainers:testcontainers:2.0.5'
-    testImplementation 'org.testcontainers:testcontainers-junit-jupiter:2.0.5'
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
 
     // Jackson 3 (Spring Boot 4): java.time support is built-in, no separate jsr310 module needed.
 

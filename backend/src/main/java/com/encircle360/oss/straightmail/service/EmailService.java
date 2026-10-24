@@ -10,6 +10,7 @@ import com.encircle360.oss.straightmail.tenant.TenantContext;
 import com.encircle360.oss.straightmail.tenant.mail.ConfigBasedMailSenderFactory;
 import com.encircle360.oss.straightmail.tenant.mail.TenantMailSenderFactory;
 import com.encircle360.oss.straightmail.util.HtmlUtil;
+import com.encircle360.oss.straightmail.util.LogSanitizer;
 import tools.jackson.databind.JsonNode;
 import freemarker.template.TemplateException;
 import jakarta.mail.internet.MimeMessage;
@@ -127,10 +128,10 @@ public class EmailService {
         // Operator visibility: request shape only — no recipient values, no rendered content.
         // Recipient addresses and rendered template bodies can carry personal data.
         log.info("Mail request received: source={}, templateId={}, recipients={}, cc={}, bcc={}, attachments={}, locale={}",
-                templateSource, templateId,
+                templateSource, LogSanitizer.sanitize(templateId),
                 size(emailRequest.getRecipients()), size(emailRequest.getCc()),
                 size(emailRequest.getBcc()), size(emailRequest.getAttachments()),
-                locale);
+                LogSanitizer.sanitize(locale));
 
         String[] rendered = this.renderTemplates(subjectTemplate, bodyTemplate, plainTextTemplate, locale, model);
 
@@ -139,7 +140,8 @@ public class EmailService {
         String plainText = rendered[2];
 
         if (subject == null || body == null) {
-            log.error("Couldn't render template (templateId={}): subject={} body={}", templateId, subject != null, body != null);
+            log.error("Couldn't render template (templateId={}): subject={} body={}",
+                    LogSanitizer.sanitize(templateId), subject != null, body != null);
             return this.result("Error while rendering template");
         }
 
@@ -162,7 +164,7 @@ public class EmailService {
         sender.send(message);
 
         log.info("Mail dispatched to SMTP: source={}, templateId={}, recipients={}",
-                templateSource, templateId, size(emailRequest.getRecipients()));
+                templateSource, LogSanitizer.sanitize(templateId), size(emailRequest.getRecipients()));
 
         RenderedTemplateDTO renderedTemplateDTO = null;
         if (emailRequest.isVerbose()) {

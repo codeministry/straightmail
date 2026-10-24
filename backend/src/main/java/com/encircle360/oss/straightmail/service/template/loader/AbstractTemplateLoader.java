@@ -1,6 +1,7 @@
 package com.encircle360.oss.straightmail.service.template.loader;
 
 import com.encircle360.oss.straightmail.model.Template;
+import com.encircle360.oss.straightmail.util.LogSanitizer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -32,7 +33,7 @@ public abstract class AbstractTemplateLoader implements TemplateLoader {
     protected String getRequiredFileContent(String path) {
         String content = readTemplateFile(path);
         if (content == null) {
-            log.error("Couldn't find required template {} in classpath or filesystem.", path);
+            log.error("Couldn't find required template {} in classpath or filesystem.", LogSanitizer.sanitize(path));
         }
         return content;
     }
@@ -51,7 +52,7 @@ public abstract class AbstractTemplateLoader implements TemplateLoader {
 
     private String readTemplateFile(String path) {
         if (escapesTemplateRoot(path)) {
-            log.warn("Rejected template path '{}': it would leave the templates root.", path);
+            log.warn("Rejected template path '{}': it would leave the templates root.", LogSanitizer.sanitize(path));
             return null;
         }
 
@@ -61,7 +62,7 @@ public abstract class AbstractTemplateLoader implements TemplateLoader {
             try {
                 return new String(resource.getInputStream().readAllBytes());
             } catch (IOException e) {
-                log.error("Error while reading template {} from classpath.", fullClassPath, e);
+                log.error("Error while reading template {} from classpath.", LogSanitizer.sanitize(fullClassPath), e);
                 return null;
             }
         }
@@ -72,7 +73,7 @@ public abstract class AbstractTemplateLoader implements TemplateLoader {
             try {
                 return Files.readString(filePath);
             } catch (Exception e) {
-                log.error("Error while reading template {} from filesystem.", filePath, e);
+                log.error("Error while reading template {} from filesystem.", LogSanitizer.sanitize(filePath), e);
                 return null;
             }
         }
