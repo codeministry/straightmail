@@ -1,6 +1,7 @@
 package com.encircle360.oss.straightmail.service;
 
 import com.encircle360.oss.straightmail.util.FakeLocaleHttpServletRequest;
+import com.encircle360.oss.straightmail.wrapper.TemplateRequestContext;
 import tools.jackson.databind.JsonNode;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -100,9 +101,10 @@ public class FreemarkerService {
         // add import of spring macros, so we can use <@spring.messages 'x' /> in our templates
         template.addAutoImport("spring", "spring.ftl");
 
-        // add macro request context, otherwise spring import will not work
-        modelMap.addAttribute("springMacroRequestContext",
-                new RequestContext(new FakeLocaleHttpServletRequest(locale), context));
+        // add macro request context, otherwise spring import will not work; only the narrow facade
+        // reaches the template, never the RequestContext with its application context
+        modelMap.addAttribute("springMacroRequestContext", new TemplateRequestContext(
+                new RequestContext(new FakeLocaleHttpServletRequest(locale), context)));
 
         // process to string and return
         return FreeMarkerTemplateUtils.processTemplateIntoString(template, modelMap);

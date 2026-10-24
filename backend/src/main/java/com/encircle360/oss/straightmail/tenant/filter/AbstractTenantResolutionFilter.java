@@ -5,6 +5,7 @@ import com.encircle360.oss.straightmail.repository.TenantRepository;
 import com.encircle360.oss.straightmail.tenant.TenantContext;
 import com.encircle360.oss.straightmail.tenant.TenantValidation;
 import com.encircle360.oss.straightmail.util.ApiPaths;
+import com.encircle360.oss.straightmail.util.LogSanitizer;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -98,14 +99,14 @@ public abstract class AbstractTenantResolutionFilter extends OncePerRequestFilte
         TenantRepository repo = tenantRepositoryProvider.getIfAvailable();
         if (repo != null) {
             if (!repo.existsBySlug(tenantId)) {
-                log.warn("Tenant '{}' not found in database", tenantId);
+                log.warn("Tenant '{}' not found in database", LogSanitizer.sanitize(tenantId));
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Tenant not found");
                 return false;
             }
         } else {
             boolean exists = tenantProperties.getConfig().stream().anyMatch(c -> tenantId.equals(c.getId()));
             if (!exists) {
-                log.warn("Tenant '{}' not found in configuration", tenantId);
+                log.warn("Tenant '{}' not found in configuration", LogSanitizer.sanitize(tenantId));
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Tenant not found");
                 return false;
             }
