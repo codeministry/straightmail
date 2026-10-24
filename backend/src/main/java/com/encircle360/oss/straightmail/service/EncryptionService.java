@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.ByteBuffer;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -81,10 +81,12 @@ public class EncryptionService {
 
             byte[] ciphertext = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
 
-            byte[] combined = ByteBuffer.allocate(iv.length + ciphertext.length)
-                    .put(iv).put(ciphertext).array();
+            // concatenated without length arithmetic, so no input size can overflow the buffer size
+            ByteArrayOutputStream combined = new ByteArrayOutputStream();
+            combined.writeBytes(iv);
+            combined.writeBytes(ciphertext);
 
-            return ENC_PREFIX + Base64.getEncoder().encodeToString(combined) + ")";
+            return ENC_PREFIX + Base64.getEncoder().encodeToString(combined.toByteArray()) + ")";
         } catch (Exception e) {
             throw new EncryptionException("Encryption failed", e);
         }

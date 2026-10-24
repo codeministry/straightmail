@@ -2,7 +2,9 @@ package com.encircle360.oss.straightmail.wrapper;
 
 import com.encircle360.oss.straightmail.wrapper.model.*;
 import tools.jackson.databind.node.*;
+import freemarker.ext.beans.DefaultMemberAccessPolicy;
 import freemarker.ext.util.ModelFactory;
+import freemarker.template.Configuration;
 import freemarker.template.DefaultObjectWrapper;
 import freemarker.template.Version;
 
@@ -30,10 +32,15 @@ public class JsonNodeObjectWrapper extends DefaultObjectWrapper {
     /**
      * Constructs the wrapper with the given FreeMarker compatibility version.
      *
+     * <p>The member access policy is pinned to {@link DefaultMemberAccessPolicy} whatever the
+     * compatibility version: below 2.3.30 FreeMarker falls back to its legacy policy, which lets a
+     * template call {@code getClass()}, reach class loaders and reflect its way out of the sandbox.
+     *
      * @param incompatibleImprovements the minimum FreeMarker version to enable improvements for
      */
     public JsonNodeObjectWrapper(Version incompatibleImprovements) {
         super(incompatibleImprovements);
+        setMemberAccessPolicy(DefaultMemberAccessPolicy.getInstance(Configuration.VERSION_2_3_30));
     }
 
     @Override

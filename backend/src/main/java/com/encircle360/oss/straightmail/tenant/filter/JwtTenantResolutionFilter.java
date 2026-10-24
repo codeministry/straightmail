@@ -4,6 +4,7 @@ import com.encircle360.oss.straightmail.config.TenantProperties;
 import com.encircle360.oss.straightmail.repository.TenantRepository;
 import com.encircle360.oss.straightmail.tenant.JwtTenantClaimsExtractor;
 import com.encircle360.oss.straightmail.tenant.TenantContext;
+import com.encircle360.oss.straightmail.util.LogSanitizer;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -101,7 +102,7 @@ public class JwtTenantResolutionFilter extends AbstractTenantResolutionFilter {
         }
 
         if (!allowedTenants.contains(requestedTenant)) {
-            log.warn("Tenant '{}' not in user's allowed tenant list", requestedTenant);
+            log.warn("Tenant '{}' not in user's allowed tenant list", LogSanitizer.sanitize(requestedTenant));
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access to tenant not permitted");
             return;
         }

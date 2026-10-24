@@ -41,7 +41,7 @@ services:
       - straightmail
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.5.6
+    image: quay.io/keycloak/keycloak:26.8.1
     container_name: straightmail-oidc-keycloak
     # Custom entrypoint: starts Keycloak in the background, then uses kcadm to set
     # sslRequired=none on the master realm. In Docker bridge networking the browser's

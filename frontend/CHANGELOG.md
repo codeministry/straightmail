@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Angular 22.2, Vitest 5, Playwright 1.64, npm 12 and all other dependencies on their latest
+  releases; TypeScript stays on 6.0 because Angular 22 requires `>=6.0 <6.1`
+- `vite` overridden to 8.3.5: `@angular/build` pins 8.3.0, which is affected by
+  GHSA-9jrq-w75r-8gcw, GHSA-rq7h-c2jc-7f22, GHSA-vfpm-58rq-9qcg and the `launch-editor` advisories
 - `TranslateModule` imports replaced by standalone `TranslatePipe` across all components
 - MailHog references replaced with Mailpit in E2E test configurations
 - Toast auto-dismiss delay adjusted; locale handling simplified in template options
